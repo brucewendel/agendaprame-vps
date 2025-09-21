@@ -770,3 +770,20 @@ textarea {
         font-size: 0.93rem;
     }
 }
+
+/* Estilos para o Modal de Alerta Genérico */
+#alert-modal .modal-content {
+    max-width: 400px;
+    text-align: center;
+}
+
+#alert-modal h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+#alert-modal p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}

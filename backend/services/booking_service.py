@@ -1,7 +1,7 @@
 import cx_Oracle
 from utils.db_conection import db_manager
 from services import senderzap_service # Importa o novo serviço
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def create_booking(data, user_id):
     """
@@ -27,6 +27,34 @@ def create_booking(data, user_id):
         titulo = data.get('titulo')
         sala_nome = data.get('sala_nome', f"ID {sala_id}") # Pega o nome da sala do payload
         descricao = data.get('descricao')
+
+        # Normaliza o formato da data, adicionando segundos se necessário
+        if inicio and len(inicio.split(':')) == 2:
+            inicio += ':00'
+        if fim and len(fim.split(':')) == 2:
+            fim += ':00'
+
+        # Validação da data de início
+        try:
+            # Remove os milissegundos se existirem
+            if inicio and '.' in inicio:
+                inicio = inicio.split('.')[0]
+            
+            inicio_dt = datetime.strptime(inicio, '%Y-%m-%dT%H:%M:%S')
+            if inicio_dt < datetime.now() - timedelta(hours=24):
+                return None, "Não é possível agendar ou alterar para uma data passada há mais de 24 horas."
+        except (ValueError, TypeError):
+            return None, "Formato de data de início inválido. Use YYYY-MM-DDTHH:MM:SS."
+
+        # Validação da data de término
+        try:
+            if fim and '.' in fim:
+                fim = fim.split('.')[0]
+            fim_dt = datetime.strptime(fim, '%Y-%m-%dT%H:%M:%S')
+            if fim_dt <= inicio_dt:
+                return None, "A data de término não pode ser anterior ou igual à data de início."
+        except (ValueError, TypeError):
+            return None, "Formato de data de término inválido. Use YYYY-MM-DDTHH:MM:SS."
 
         print(f"DEBUG: create_booking - sala_id: {sala_id} (type: {type(sala_id)})")
         print(f"DEBUG: create_booking - user_id: {user_id} (type: {type(user_id)})")
@@ -118,7 +146,6 @@ def create_booking(data, user_id):
     finally:
         db_manager.connection.close()
 
-
 def get_bookings(start_date=None, end_date=None):
     """
     Retorna a lista de agendamentos com base em um período de data.
@@ -157,7 +184,6 @@ def get_bookings(start_date=None, end_date=None):
     finally:
         db_manager.connection.close()
 
-
 def update_booking(booking_id, data, user_id, user_profile):
     """
     Atualiza um agendamento existente, com validação de permissão e conflito.
@@ -189,6 +215,34 @@ def update_booking(booking_id, data, user_id, user_profile):
         sala_id = data.get('sala_id')
         inicio = data.get('inicio')
         fim = data.get('fim')
+
+        # Normaliza o formato da data, adicionando segundos se necessário
+        if inicio and len(inicio.split(':')) == 2:
+            inicio += ':00'
+        if fim and len(fim.split(':')) == 2:
+            fim += ':00'
+
+        # Validação da data de início
+        try:
+            # Remove os milissegundos se existirem
+            if inicio and '.' in inicio:
+                inicio = inicio.split('.')[0]
+
+            inicio_dt = datetime.strptime(inicio, '%Y-%m-%dT%H:%M:%S')
+            if inicio_dt < datetime.now() - timedelta(hours=24):
+                return None, "Não é possível agendar ou alterar para uma data passada há mais de 24 horas."
+        except (ValueError, TypeError):
+            return None, "Formato de data de início inválido. Use YYYY-MM-DDTHH:MM:SS."
+
+        # Validação da data de término
+        try:
+            if fim and '.' in fim:
+                fim = fim.split('.')[0]
+            fim_dt = datetime.strptime(fim, '%Y-%m-%dT%H:%M:%S')
+            if fim_dt <= inicio_dt:
+                return None, "A data de término não pode ser anterior ou igual à data de início."
+        except (ValueError, TypeError):
+            return None, "Formato de data de término inválido. Use YYYY-MM-DDTHH:MM:SS."
         
         sql_check_conflict = """
             SELECT COUNT(*)
@@ -317,7 +371,7 @@ def get_agendamento(id_agendamento):
                 TO_CHAR(DATA_FIM, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_FIM, 
                 TITULO, DESCRICAO
             FROM MX2_AGENDAMENTOS_SALA
-            WHERE ID_AGENDAMENTO = :id_agendamento
+            WHERE ID_AGENDamento = :id_agendamento
         """
         
         cursor.execute(sql_query, id_agendamento=id_agendamento)

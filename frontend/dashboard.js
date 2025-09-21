@@ -7,12 +7,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     const decodedToken = jwt_decode(token);
     const userId = decodedToken.user_id;
 
-    let rooms = []; // Agora as salas serão carregadas da API
+    let rooms = [];
     let currentRoomId = null;
     let currentWeekStart = getStartOfWeek(new Date());
     let selectedBookingId = null;
 
-    // Elementos do DOM
+    // --- Elementos do DOM ---
     const roomList = document.getElementById('room-list');
     const calendarTitle = document.getElementById('calendar-title');
     const prevWeekBtn = document.getElementById('prev-week-btn');
@@ -21,10 +21,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const calendarGridHeaders = document.getElementById('calendar-grid-headers');
     const calendarGridBody = document.getElementById('calendar-grid-body');
     const calendarHours = document.querySelector('.calendar-hours');
-    const modal = document.getElementById('booking-modal');
-    const closeModalBtn = document.querySelector('.close-btn');
+    const bookingModal = document.getElementById('booking-modal');
+    const closeModalBtn = document.querySelector('#booking-modal .close-btn');
     const bookingForm = document.getElementById('booking-form');
-    const modalRoomInput = document.getElementById('modal-sala');
     const deleteBookingBtn = document.getElementById('delete-booking-btn');
     const manageRoomsBtn = document.getElementById('manage-rooms-btn');
     const roomManagementModal = document.getElementById('room-management-modal');
@@ -34,150 +33,340 @@ document.addEventListener('DOMContentLoaded', async function() {
     const editRoomForm = document.getElementById('edit-room-form');
     const editRoomId = document.getElementById('edit-room-id');
     const editRoomName = document.getElementById('edit-room-name');
-    
     const logoutBtn = document.getElementById('logout-btn');
     const userNameSpan = document.getElementById('user-name');
 
-    // Inicialização
-    const userName = localStorage.getItem('userName');
-    if (userName && userName !== 'undefined') {
-        userNameSpan.textContent = `Olá, ${userName}`;
-    } else {
-        userNameSpan.textContent = 'Olá, Usuário';
+    // --- Modal de Alerta Genérico ---
+    const alertModal = document.getElementById('alert-modal');
+    const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
+    const alertModalOkBtn = document.getElementById('alert-modal-ok-btn');
+    const alertModalMessage = document.getElementById('alert-modal-message');
+
+    // --- Funções do Modal de Alerta ---
+    function showAlert(message) {
+        alertModalMessage.textContent = message;
+        alertModal.style.display = 'flex';
     }
+
+    function hideAlert() {
+        alertModal.style.display = 'none';
+    }
+
+    alertModalCloseBtn.addEventListener('click', hideAlert);
+    alertModalOkBtn.addEventListener('click', hideAlert);
+    window.addEventListener('click', (event) => {
+        if (event.target == alertModal) {
+            hideAlert();
+        }
+    });
+
+    // --- Inicialização ---
+    const userName = localStorage.getItem('userName');
+    userNameSpan.textContent = userName && userName !== 'undefined' ? `Olá, ${userName}` : 'Olá, Usuário';
     
-    // Função para buscar as salas da API
+    // --- Funções da API ---
     async function fetchRooms() {
         try {
-            const response = await fetch('http://127.0.0.1:5000/rooms', {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetch('http://127.0.0.1:5000/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 rooms = await response.json();
                 if (rooms.length > 0 && currentRoomId === null) {
-                    const activeRooms = rooms.filter(room => room.active);
-                    if (activeRooms.length > 0) {
-                        currentRoomId = activeRooms[0].id;
-                    } else {
-                        currentRoomId = null; // No active rooms found
-                    }
+                    currentRoomId = rooms.find(r => r.active)?.id || null;
                 }
                 renderRoomTabs(rooms);
             } else {
-                console.error('Erro ao carregar salas:', await response.text());
+                const error = await response.json();
+                showAlert(`Erro ao carregar salas: ${error.message}`);
             }
         } catch (error) {
-            console.error('Erro ao conectar com o servidor para buscar salas:', error);
+            showAlert('Erro de conexão ao buscar salas. Verifique o servidor.');
         }
     }
 
-    await fetchRooms(); // Carrega as salas antes de renderizar o calendário
-    renderHours();
-    await renderCalendar();
+    async function fetchBookings(startDate) {
+        const toApiFormat = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] + 'T00:00:00';
+        const startIso = toApiFormat(startDate);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        const endIso = toApiFormat(endDate);
 
-    // Event Listeners
-    roomList.addEventListener('click', async (event) => {
-        const tab = event.target.closest('.room-tab');
-        if (tab && !tab.classList.contains('active')) {
-            currentRoomId = parseInt(tab.dataset.roomId);
-            document.querySelectorAll('.room-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            await renderCalendar();
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            return response.ok ? await response.json() : (showAlert('Erro ao carregar agendamentos.'), []);
+        } catch (error) {
+            showAlert('Erro de conexão ao buscar agendamentos.');
+            return [];
         }
-    });
-
-    prevWeekBtn.addEventListener('click', async () => {
-        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-        await renderCalendar();
-    });
-
-    nextWeekBtn.addEventListener('click', async () => {
-        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-        await renderCalendar();
-    });
-
-    closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
-    window.addEventListener('click', (event) => {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    });
-
-    bookingForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const bookingId = bookingForm.dataset.bookingId;
-        if (bookingId) {
-            await updateBooking(token, bookingId);
-        } else {
-            await createBooking(token);
-        }
-    });
-
-    deleteBookingBtn.addEventListener('click', async () => {
-        if (selectedBookingId && confirm('Tem certeza que deseja excluir este agendamento?')) {
-            await deleteBooking(token, selectedBookingId);
-        }
-    });
-
-    
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
     }
 
-    if (localStorage.getItem('userProfile') === 'Administrador') {
-        manageRoomsBtn.style.display = 'block';
-        manageRoomsBtn.addEventListener('click', openRoomManagementModal);
-        addNewRoomBtn.addEventListener('click', openAddRoomModal);
-        editRoomForm.addEventListener('submit', updateRoom);
-    } else {
-        manageRoomsBtn.style.display = 'none';
+    async function createBooking() {
+        const payload = buildBookingPayload();
+        try {
+            const response = await fetch('http://127.0.0.1:5000/agendamentos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                bookingModal.style.display = 'none';
+                await renderCalendar();
+            } else {
+                showAlert(data.message || 'Erro desconhecido ao criar agendamento.');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao criar agendamento.');
+        }
     }
 
-    // Utilitários
-    function getStartOfWeek(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Segunda-feira
-        const startOfWeek = new Date(d.setDate(diff));
-        startOfWeek.setHours(0, 0, 0, 0);
-        return startOfWeek;
+    async function updateBooking(bookingId) {
+        const payload = buildBookingPayload();
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                bookingModal.style.display = 'none';
+                await renderCalendar();
+            } else {
+                showAlert(data.message || 'Erro desconhecido ao atualizar agendamento.');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao atualizar agendamento.');
+        }
     }
 
-    function formatDateTimeLocal(date) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const seconds = date.getSeconds().toString().padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    async function deleteBooking(bookingId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await response.json();
+            if (response.ok) {
+                bookingModal.style.display = 'none';
+                await renderCalendar();
+            } else {
+                showAlert(data.message || 'Erro ao excluir agendamento.');
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao excluir agendamento.');
+        }
     }
 
-    // Gera observações com base nos equipamentos selecionados
-    function generateEquipmentObservations() {
-        const observations = [];
-        if (document.getElementById('modal-projetor').checked) {
-            observations.push('- Projetor');
+    // --- Funções de Gerenciamento de Salas (Admin) ---
+    async function addNewRoom() {
+        const name = prompt('Nome da nova sala:');
+        if (!name) return;
+        try {
+            const response = await fetch('http://127.0.0.1:5000/rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ name })
+            });
+            if (response.ok) {
+                await fetchRooms();
+                openRoomManagementModal();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao criar sala: ${error.message}`);
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao criar sala.');
         }
-        if (document.getElementById('modal-regua-energia').checked) {
-            observations.push('- Régua de Energia');
-        }
-        if (document.getElementById('modal-suporte-ti').checked) {
-            observations.push('- Suporte de TI');
-        }
-        return observations.length > 0 ? `Equipamentos necessários:\n${observations.join('\n')}` : '';
     }
-    // Renderização das abas de sala
+
+    async function updateRoom(e) {
+        e.preventDefault();
+        const roomId = parseInt(editRoomId.value);
+        const newName = editRoomName.value;
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ name: newName })
+            });
+            if (response.ok) {
+                await fetchRooms();
+                editRoomModal.style.display = 'none';
+                openRoomManagementModal();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao atualizar sala: ${error.message}`);
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao atualizar sala.');
+        }
+    }
+
+    async function deleteRoom(roomId) {
+        if (!confirm('Deseja realmente excluir esta sala? Isso removerá todos os seus agendamentos.')) return;
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (response.ok) {
+                if (currentRoomId === roomId) currentRoomId = rooms.find(r => r.active)?.id || null;
+                await fetchRooms();
+                openRoomManagementModal();
+                await renderCalendar();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao excluir sala: ${error.message}`);
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao excluir sala.');
+        }
+    }
+
+    async function toggleRoomStatus(roomId) {
+        const room = rooms.find(r => r.id === roomId);
+        if (!room) return;
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ active: !room.active })
+            });
+            if (response.ok) {
+                await fetchRooms();
+                openRoomManagementModal();
+                await renderCalendar();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao alterar status da sala: ${error.message}`);
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao alterar status da sala.');
+        }
+    }
+
+    // --- Renderização ---
     function renderRoomTabs(rooms) {
-        const userProfile = localStorage.getItem('userProfile');
         const activeRooms = rooms.filter(room => room.active);
-        roomList.innerHTML = activeRooms.map(room => `
-            <div class="room-tab ${room.id === currentRoomId ? 'active' : ''}" data-room-id="${room.id}">
-                ${room.name}
-            </div>
-        `).join('');
+        roomList.innerHTML = activeRooms.map(room => 
+            `<div class="room-tab ${room.id === currentRoomId ? 'active' : ''}" data-room-id="${room.id}">${room.name}</div>`
+        ).join('');
+    }
+
+    function renderHours() {
+        calendarHours.innerHTML = Array.from({length: 14}, (_, i) => `<div>${(i + 7).toString().padStart(2, '0')}:00</div>`).join('');
+    }
+
+    async function renderCalendar() {
+        if (currentRoomId === null) {
+            calendarGridBody.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Nenhuma sala ativa encontrada.</div>';
+            calendarGridHeaders.innerHTML = '';
+            calendarTitle.textContent = 'Nenhuma Sala Selecionada';
+            loadingMessage.style.display = 'none';
+            return;
+        }
+
+        loadingMessage.style.display = 'block';
+        const weekDates = Array.from({length: 6}, (_, i) => {
+            const date = new Date(currentWeekStart);
+            date.setDate(currentWeekStart.getDate() + i);
+            return date;
+        });
+
+        calendarTitle.textContent = `${weekDates[0].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})} - ${weekDates[5].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})}`;
+        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">Horários</div>' + weekDates.map(date => 
+            `<div class="calendar-day-header">${date.toLocaleDateString('pt-BR', {weekday: 'short'})}<br>${date.toLocaleDateString('pt-BR', {day: '2-digit'})}</div>`
+        ).join('');
+
+        const bookings = await fetchBookings(currentWeekStart);
+        loadingMessage.style.display = 'none';
+
+        calendarGridBody.innerHTML = weekDates.map(date => `
+            <div class="calendar-day-cell">
+                <div class="day-cell-content">
+                    ${Array.from({length: 14}, (_, hour) => `<div class="time-slot" data-date="${date.toISOString().split('T')[0]}" data-hour="${hour + 7}"></div>`).join('')}
+                </div>
+            </div>`
+        ).join('');
+
+        renderBookingBlocks(bookings, weekDates);
+        calendarGridBody.querySelectorAll('.time-slot').forEach(slot => slot.addEventListener('click', openBookingModalForCreation));
+    }
+
+    function renderBookingBlocks(bookings, weekDates) {
+        if (!bookings) return;
+        const bookingsForRoom = bookings.filter(b => b.ID_SALA === currentRoomId);
+
+        bookingsForRoom.forEach(booking => {
+            const start = new Date(booking.DATA_INICIO);
+            const end = new Date(booking.DATA_FIM);
+            const startDay = start.getDay();
+            if (startDay === 0) return; // Ignora domingo
+
+            const dayOffset = startDay - 1;
+            const bookingStartDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            if (bookingStartDay < weekDates[0] || bookingStartDay > weekDates[5]) return;
+
+            const dayCellContent = calendarGridBody.children[dayOffset]?.querySelector('.day-cell-content');
+            if (dayCellContent) {
+                const bookingBlock = document.createElement('div');
+                bookingBlock.className = 'booking-block';
+                bookingBlock.textContent = booking.TITULO;
+                bookingBlock.dataset.bookingId = booking.ID_AGENDAMENTO;
+                const slotHeight = 40;
+                const top = ((start.getHours() - 7) * slotHeight) + (start.getMinutes() * slotHeight / 60);
+                const height = (end.getTime() - start.getTime()) / (1000 * 60) / 60 * slotHeight;
+                Object.assign(bookingBlock.style, { position: 'absolute', top: `${top}px`, height: `${height}px` });
+                bookingBlock.addEventListener('click', (e) => { e.stopPropagation(); openBookingModalForEdit(booking.ID_AGENDAMENTO); });
+                dayCellContent.appendChild(bookingBlock);
+            }
+        });
+    }
+
+    // --- Funções de Abertura de Modais ---
+    function openBookingModalForCreation(event) {
+        if (currentRoomId === null) {
+            showAlert('Nenhuma sala selecionada para agendar.');
+            return;
+        }
+        const { date, hour } = event.target.dataset;
+        bookingForm.reset();
+        bookingForm.removeAttribute('data-booking-id');
+        document.getElementById('modal-sala').value = rooms.find(r => r.id === currentRoomId).name;
+        document.getElementById('modal-inicio').value = `${date}T${hour.padStart(2, '0')}:00`;
+        document.getElementById('modal-fim').value = `${date}T${(parseInt(hour) + 1).toString().padStart(2, '0')}:00`;
+        deleteBookingBtn.style.display = 'none';
+        bookingForm.querySelector('button[type="submit"]').textContent = 'Agendar';
+        bookingModal.style.display = 'flex';
+    }
+
+    async function openBookingModalForEdit(bookingId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) throw new Error('Falha ao carregar dados do agendamento.');
+            const booking = await response.json();
+            
+            const isOwner = booking.ID_USUARIO === userId;
+            const isAdmin = localStorage.getItem('userProfile') === 'Administrador';
+
+            bookingForm.setAttribute('data-booking-id', bookingId);
+            document.getElementById('modal-titulo').value = booking.TITULO;
+            document.getElementById('modal-sala').value = rooms.find(r => r.id === booking.ID_SALA).name;
+            document.getElementById('modal-inicio').value = booking.DATA_INICIO.replace(' ', 'T');
+            document.getElementById('modal-fim').value = booking.DATA_FIM.replace(' ', 'T');
+            
+            const desc = booking.DESCRICAO || '';
+            const equipmentRegex = /Equipamentos necessários:[\s\S]*/;
+            document.getElementById('modal-descricao').value = desc.replace(equipmentRegex, '').trim();
+            const equipmentMatch = desc.match(equipmentRegex);
+            document.getElementById('modal-projetor').checked = equipmentMatch ? equipmentMatch[0].includes('Projetor') : false;
+            document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('Régua de Energia') : false;
+            document.getElementById('modal-suporte-ti').checked = equipmentMatch ? equipmentMatch[0].includes('Suporte de TI') : false;
+
+            const canEdit = isAdmin || isOwner;
+            deleteBookingBtn.style.display = canEdit ? 'inline-block' : 'none';
+            bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-block' : 'none';
+            Array.from(bookingForm.elements).forEach(el => el.disabled = !canEdit);
+            document.getElementById('modal-sala').disabled = true; // Sala não pode ser alterada
+
+            bookingModal.style.display = 'flex';
+        } catch (error) {
+            showAlert(error.message);
+        }
     }
 
     function openRoomManagementModal() {
@@ -187,569 +376,77 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div>
                     <button class="edit-room-btn" data-room-id="${room.id}">Editar</button>
                     <button class="delete-room-btn" data-room-id="${room.id}">Excluir</button>
-                    <button class="deactivate-room-btn" data-room-id="${room.id}">${room.active ? 'Desativar' : 'Ativar'}</button>
+                    <button class="toggle-room-status-btn" data-room-id="${room.id}">${room.active ? 'Desativar' : 'Ativar'}</button>
                 </div>
-            </div>
-        `).join('');
-
+            </div>`).join('');
         roomManagementModal.style.display = 'flex';
-
-        roomManagementList.querySelectorAll('.edit-room-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const roomId = parseInt(e.target.dataset.roomId);
-                const room = rooms.find(r => r.id === roomId);
-                openEditRoomModal(room);
-            });
-        });
-
-        roomManagementList.querySelectorAll('.delete-room-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const roomId = parseInt(e.target.dataset.roomId);
-                deleteRoom(roomId);
-            });
-        });
-
-        roomManagementList.querySelectorAll('.deactivate-room-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const roomId = parseInt(e.target.dataset.roomId);
-                deactivateRoom(roomId);
-            });
-        });
     }
 
-    // Modal de adicionar sala
-    async function openAddRoomModal() {
-        const name = prompt('Nome da nova sala:');
-        if (name) {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/rooms', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name: name })
-                });
-                if (response.ok) {
-                    await fetchRooms();
-                    await renderCalendar();
-                    openRoomManagementModal();
-                } else {
-                    console.error('Erro ao criar sala:', await response.text());
-                    alert('Erro ao criar sala.');
-                }
-            } catch (error) {
-                console.error('Erro ao conectar com o servidor para criar sala:', error);
-                alert('Erro ao conectar com o servidor.');
-            }
-        }
-    }
-
-    // Modal de editar sala
     function openEditRoomModal(room) {
         editRoomId.value = room.id;
         editRoomName.value = room.name;
         editRoomModal.style.display = 'flex';
     }
 
-    async function updateRoom(e) {
-        e.preventDefault();
-        const roomId = parseInt(editRoomId.value);
-        const newName = editRoomName.value;
-        
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ name: newName })
-            });
-            if (response.ok) {
-                await fetchRooms();
-                await renderCalendar();
-                editRoomModal.style.display = 'none';
-                openRoomManagementModal();
-            } else {
-                console.error('Erro ao atualizar sala:', await response.text());
-                alert('Erro ao atualizar sala.');
-            }
-        } catch (error) {
-            console.error('Erro ao conectar com o servidor para atualizar sala:', error);
-            alert('Erro ao conectar com o servidor.');
-        }
+    // --- Helpers ---
+    function getStartOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(new Date(d.setDate(diff)).setHours(0, 0, 0, 0));
     }
 
-    // Excluir sala
-    async function deleteRoom(roomId) {
-        if (confirm('Deseja realmente excluir esta sala?')) {
-            try {
-                const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (response.ok) {
-                    await fetchRooms();
-                    if (currentRoomId === roomId) {
-                        currentRoomId = rooms[0]?.id || null;
-                    }
-                    await renderCalendar();
-                    openRoomManagementModal();
-                } else {
-                    console.error('Erro ao excluir sala:', await response.text());
-                    alert('Erro ao excluir sala.');
-                }
-            } catch (error) {
-                console.error('Erro ao conectar com o servidor para excluir sala:', error);
-                alert('Erro ao conectar com o servidor.');
-            }
-        }
-    }
+    function buildBookingPayload() {
+        const equipmentObs = [
+            document.getElementById('modal-projetor').checked && '- Projetor',
+            document.getElementById('modal-regua-energia').checked && '- Régua de Energia',
+            document.getElementById('modal-suporte-ti').checked && '- Suporte de TI'
+        ].filter(Boolean);
 
-    async function deactivateRoom(roomId) {
-        const room = rooms.find(r => r.id === roomId);
-        if (room) {
-            try {
-                const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ active: !room.active })
-                });
-                if (response.ok) {
-                    await fetchRooms();
-                    await renderCalendar();
-                    openRoomManagementModal();
-                } else {
-                    console.error('Erro ao desativar/ativar sala:', await response.text());
-                    alert('Erro ao desativar/ativar sala.');
-                }
-            } catch (error) {
-                console.error('Erro ao conectar com o servidor para desativar/ativar sala:', error);
-                alert('Erro ao conectar com o servidor.');
-            }
-        }
-    }
-
-    // Renderização das horas
-    function renderHours() {
-        calendarHours.innerHTML = '';
-        for (let i = 7; i <= 20; i++) {
-            const hour = i.toString().padStart(2, '0') + ':00';
-            calendarHours.innerHTML += `<div>${hour}</div>`;
-        }
-    }
-
-    // Renderização do calendário (segunda a sábado, 07h às 20h)
-    async function renderCalendar() {
-        if (currentRoomId === null) {
-            calendarGridBody.innerHTML = '<div style="text-align: center; padding: 20px;">Nenhuma sala ativa encontrada para exibir o calendário.</div>';
-            calendarGridHeaders.innerHTML = '';
-            calendarTitle.textContent = 'Nenhuma Sala';
-            loadingMessage.style.display = 'none';
-            return;
-        }
-
-        const daysOfWeekNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">Horários</div>';
-        const weekDates = [];
-        for (let i = 0; i < 6; i++) {
-            const date = new Date(currentWeekStart);
-            date.setDate(currentWeekStart.getDate() + i);
-            weekDates.push(date);
-        }
-        calendarTitle.textContent =
-            `${weekDates[0].toLocaleString('pt-BR', { month: 'long', day: 'numeric' })} - ${weekDates[5].toLocaleString('pt-BR', { month: 'long', day: 'numeric' })}`;
-        weekDates.forEach(date => {
-            const dayName = daysOfWeekNames[date.getDay() === 0 ? 6 : date.getDay() - 1];
-            const formattedDate = `${dayName} ${date.getDate()}/${date.getMonth() + 1}`;
-            calendarGridHeaders.innerHTML += `<div class="calendar-day-header">${formattedDate}</div>`;
-        });
-
-        calendarGridBody.innerHTML = '';
-        loadingMessage.style.display = 'block';
-
-        const bookings = await fetchBookings(token, currentWeekStart);
-        loadingMessage.style.display = 'none';
-
-        for (let dayIndex = 0; dayIndex < 6; dayIndex++) {
-            const dayCell = document.createElement('div');
-            dayCell.className = 'calendar-day-cell';
-            
-            // Cria um contêiner interno para os slots e blocos
-            const dayCellContent = document.createElement('div');
-            dayCellContent.className = 'day-cell-content';
- 
-            const date = weekDates[dayIndex];
- 
-            for (let hour = 7; hour <= 20; hour++) {
-                const timeSlot = document.createElement('div');
-                timeSlot.className = 'time-slot';
-                timeSlot.dataset.date = date.toISOString().split('T')[0];
-                timeSlot.dataset.hour = hour;
-                timeSlot.addEventListener('click', (event) => openBookingModalForCreation(event));
-                dayCellContent.appendChild(timeSlot);
-            }
-            dayCell.appendChild(dayCellContent);
-            calendarGridBody.appendChild(dayCell);
-        }
-
-        renderBookingBlocks(bookings, weekDates);
-    }
-
-    // Renderização dos blocos de agendamento
-    function renderBookingBlocks(bookings, weekDates) {
-        document.querySelectorAll('.booking-block').forEach(block => block.remove());
-        if (!bookings) return;
-        const bookingsForRoom = bookings.filter(b => b.ID_SALA === currentRoomId);
-
-        bookingsForRoom.forEach(booking => {
-            // O backend agora envia a data formatada, então podemos criar o objeto Date diretamente.
-            const start = new Date(booking.DATA_INICIO);
-            const end = new Date(booking.DATA_FIM);
-
-            // Só exibe se estiver entre segunda e sábado
-            const startDay = start.getDay();
-            if (startDay === 0 || startDay > 6) return; // Ignora domingo
-
-            // Calcula o índice do dia (segunda=0, ..., sábado=5)
-            const dayOffset = startDay - 1;
-            if (dayOffset < 0 || dayOffset > 5) return;
-
-            const bookingStartDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-            const weekStartDay = new Date(weekDates[0].getFullYear(), weekDates[0].getMonth(), weekDates[0].getDate());
-            const weekEndDay = new Date(weekDates[5].getFullYear(), weekDates[5].getMonth(), weekDates[5].getDate());
-            if (bookingStartDay < weekStartDay || bookingStartDay > weekEndDay) return;
-
-            const startHour = start.getHours();
-            const startMinute = start.getMinutes();
-            const endHour = end.getHours();
-            const endMinute = end.getMinutes();
-            const durationInMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-
-            // O bloco de agendamento deve ser filho do .day-cell-content
-            const dayCell = calendarGridBody.children[dayOffset]?.querySelector('.day-cell-content');
-
-            if (dayCell) {
-                const bookingBlock = document.createElement('div');
-                bookingBlock.className = 'booking-block';
-                bookingBlock.textContent = booking.TITULO;
-                bookingBlock.dataset.bookingId = booking.ID_AGENDAMENTO;
-                bookingBlock.dataset.roomId = booking.ID_SALA;
-                // Ajuste: calcula top e height para englobar as grades corretamente
-                const slotHeight = 40; // Altura de cada slot em pixels
-                const top = ((startHour - 7) * slotHeight) + (startMinute * slotHeight / 60);
-                const height = (durationInMinutes / 60) * slotHeight; // Correção no cálculo da altura
-                bookingBlock.style.position = 'absolute';
-                bookingBlock.style.top = `${top}px`;
-                bookingBlock.style.height = `${height}px`;
-                bookingBlock.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    openBookingModalForEdit(booking.ID_AGENDAMENTO, booking.ID_SALA);
-                });
-                dayCell.appendChild(bookingBlock);
-            }
-        });
-    }
-
-    // Requisição dos agendamentos
-    async function fetchBookings(token, startDate) {
-        // Helper para formatar a data para o formato YYYY-MM-DDTHH:MM:SS que a API espera,
-        // usando os componentes da data local para evitar problemas de fuso horário.
-        const toApiFormat = (date) => {
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            const seconds = date.getSeconds().toString().padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-        };
-
-        const startIso = toApiFormat(startDate);
-
-        // O período de busca deve cobrir a semana inteira, de segunda a sábado.
-        // A query do backend é (DATA_INICIO < end_date), então pegamos o início do próximo dia (domingo).
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 6); // startDate (segunda) + 6 dias = Domingo
-        const endIso = toApiFormat(endDate);
-
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos?start=${startIso}&end=${endIso}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data;
-            } else {
-                console.error('Erro ao carregar agendamentos:', await response.text());
-                return [];
-            }
-        } catch (error) {
-            console.error('Erro ao conectar com o servidor:', error);
-            return [];
-        }
-    }
-
-    // Criação de agendamento
-    async function createBooking(token) {
-        const messageArea = document.getElementById('modal-message-area');
-        messageArea.style.display = 'none';
-        messageArea.classList.remove('message-success', 'message-error');
-
-        const equipmentObs = generateEquipmentObservations();
         const userDescription = document.getElementById('modal-descricao').value;
+        const finalDescription = [userDescription, equipmentObs.length > 0 ? `Equipamentos necessários:\n${equipmentObs.join('\n')}` : ''].filter(Boolean).join('\n\n');
 
-        const roomName = rooms.find(r => r.id === currentRoomId).name;
-
-        const payload = {
+        return {
             sala_id: currentRoomId,
             inicio: document.getElementById('modal-inicio').value,
             fim: document.getElementById('modal-fim').value,
             titulo: document.getElementById('modal-titulo').value,
-            descricao: [userDescription, equipmentObs].filter(Boolean).join('\n\n'),
-            sala_nome: roomName // Adiciona o nome da sala para a notificação
+            descricao: finalDescription,
+            sala_nome: rooms.find(r => r.id === currentRoomId).name
         };
-
-        console.log('Payload sent to createBooking:', payload);
-        console.log('currentRoomId before sending:', currentRoomId);
-
-        try {
-            const response = await fetch('http://127.0.0.1:5000/agendamentos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                messageArea.textContent = data.message || 'Agendamento criado com sucesso!';
-                messageArea.classList.add('message-success');
-                messageArea.style.display = 'block';
-                modal.style.display = 'none';
-                await renderCalendar();
-            } else {
-                messageArea.textContent = data.message || 'Erro ao agendar a sala.';
-                messageArea.classList.add('message-error');
-                messageArea.style.display = 'block';
-            }
-        } catch (error) {
-            messageArea.textContent = 'Erro ao conectar com o servidor.';
-            messageArea.classList.add('message-error');
-            messageArea.style.display = 'block';
-            console.error('Erro na requisição:', error);
-        }
     }
 
-    // Atualização de agendamento
-    async function updateBooking(token, bookingId) {
-        const messageArea = document.getElementById('modal-message-area');
-        messageArea.style.display = 'none';
-        messageArea.classList.remove('message-success', 'message-error');
-
-        const equipmentObs = generateEquipmentObservations();
-        const userDescription = document.getElementById('modal-descricao').value;
-
-        const payload = {
-            sala_id: currentRoomId,
-            inicio: document.getElementById('modal-inicio').value,
-            fim: document.getElementById('modal-fim').value,
-            titulo: document.getElementById('modal-titulo').value,
-            descricao: [userDescription, equipmentObs].filter(Boolean).join('\n\n')
-        };
-
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                messageArea.textContent = data.message || 'Agendamento alterado com sucesso!';
-                messageArea.classList.add('message-success');
-                messageArea.style.display = 'block';
-                modal.style.display = 'none';
-                await renderCalendar();
-            } else {
-                messageArea.textContent = data.message || 'Erro ao alterar o agendamento.';
-                messageArea.classList.add('message-error');
-                messageArea.style.display = 'block';
-            }
-        } catch (error) {
-            messageArea.textContent = 'Erro ao conectar com o servidor.';
-            messageArea.classList.add('message-error');
-            messageArea.style.display = 'block';
-            console.error('Erro na requisição:', error);
-        }
-    }
-
-    // Exclusão de agendamento
-    async function deleteBooking(token, bookingId) {
-        const messageArea = document.getElementById('modal-message-area');
-        messageArea.style.display = 'none';
-        messageArea.classList.remove('message-success', 'message-error');
-
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                messageArea.textContent = data.message || 'Agendamento excluído com sucesso!';
-                messageArea.classList.add('message-success');
-                messageArea.style.display = 'block';
-                modal.style.display = 'none';
-                await renderCalendar();
-            } else {
-                messageArea.textContent = data.message || 'Erro ao excluir o agendamento.';
-                messageArea.classList.add('message-error');
-                messageArea.style.display = 'block';
-            }
-        } catch (error) {
-            messageArea.textContent = 'Erro ao conectar com o servidor.';
-            messageArea.classList.add('message-error');
-            messageArea.style.display = 'block';
-            console.error('Erro na requisição:', error);
-        }
-    }
-
-    // Modal de criação de agendamento
-    function openBookingModalForCreation(event) {
-        if (currentRoomId === null) {
-            alert('Nenhuma sala selecionada para agendar.');
-            return;
-        }
-
-        const slot = event.target;
-        const date = slot.dataset.date;
-        const hour = slot.dataset.hour;
-
-        bookingForm.reset();
-        bookingForm.removeAttribute('data-booking-id');
-        document.getElementById('modal-titulo').value = '';
-        document.getElementById('modal-descricao').value = '';
-        document.getElementById('modal-projetor').checked = false;
-        document.getElementById('modal-regua-energia').checked = false;
-        document.getElementById('modal-suporte-ti').checked = false;
-        document.getElementById('modal-sala').value = rooms.find(r => r.id === currentRoomId).name;
-        document.getElementById('modal-inicio').value = `${date}T${hour.padStart(2, '0')}:00`;
-        document.getElementById('modal-fim').value = `${date}T${(parseInt(hour) + 1).toString().padStart(2, '0')}:00`;
-
-        deleteBookingBtn.style.display = 'none';
-        bookingForm.querySelector('button[type="submit"]').textContent = 'Agendar';
-        selectedBookingId = null;
-        document.getElementById('modal-message-area').style.display = 'none';
-        modal.style.display = 'flex';
-    }
-
-    // Modal de edição de agendamento
-    async function openBookingModalForEdit(bookingId, roomId) {
-        selectedBookingId = bookingId;
-        bookingForm.setAttribute('data-booking-id', bookingId);
-
-        const messageArea = document.getElementById('modal-message-area');
-        messageArea.style.display = 'none';
-        messageArea.classList.remove('message-success', 'message-error');
-
-        try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                const booking = await response.json();
-                const userProfile = localStorage.getItem('userProfile');
-                const userId = jwt_decode(token).user_id;
-
-                const isOwner = booking.ID_USUARIO === userId;
-                const isAdmin = userProfile === 'Administrador';
-
-                document.getElementById('modal-titulo').value = booking.TITULO;
-                document.getElementById('modal-sala').value = rooms.find(r => r.id === roomId).name;
-                document.getElementById('modal-inicio').value = formatDateTimeLocal(new Date(booking.DATA_INICIO));
-                document.getElementById('modal-fim').value = formatDateTimeLocal(new Date(booking.DATA_FIM));
-                
-                // Separa a descrição do usuário das observações de equipamento
-                const desc = booking.DESCRICAO || '';
-                const equipmentRegex = /Equipamentos necessários:([\s\S]*)/;
-                const equipmentMatch = desc.match(equipmentRegex);
-                
-                document.getElementById('modal-descricao').value = desc.replace(equipmentRegex, '').trim();
-
-                if (equipmentMatch && equipmentMatch[1]) {
-                    document.getElementById('modal-projetor').checked = equipmentMatch[1].includes('Projetor');
-                    document.getElementById('modal-regua-energia').checked = equipmentMatch[1].includes('Régua de Energia');
-                    document.getElementById('modal-suporte-ti').checked = equipmentMatch[1].includes('Suporte de TI');
-                }
-
-                if (isAdmin || isOwner) {
-                    deleteBookingBtn.style.display = 'inline-block';
-                    bookingForm.querySelector('button[type="submit"]').textContent = 'Salvar Alterações';
-                    bookingForm.querySelector('button[type="submit"]').style.display = 'inline-block';
-                    document.getElementById('modal-titulo').disabled = false;
-                    document.getElementById('modal-inicio').disabled = false;
-                    document.getElementById('modal-fim').disabled = false;
-                    document.getElementById('modal-descricao').disabled = false;
-                    document.getElementById('modal-projetor').disabled = false;
-                    document.getElementById('modal-regua-energia').disabled = false;
-                    document.getElementById('modal-suporte-ti').disabled = false;
-                } else {
-                    deleteBookingBtn.style.display = 'none';
-                    bookingForm.querySelector('button[type="submit"]').style.display = 'none';
-                    document.getElementById('modal-titulo').disabled = true;
-                    document.getElementById('modal-inicio').disabled = true;
-                    document.getElementById('modal-fim').disabled = true;
-                    document.getElementById('modal-descricao').disabled = true;
-                    document.getElementById('modal-projetor').disabled = true;
-                    document.getElementById('modal-regua-energia').disabled = true;
-                    document.getElementById('modal-suporte-ti').disabled = true;
-                    messageArea.textContent = 'Você não tem permissão para editar este agendamento.';
-                    messageArea.classList.add('message-error');
-                    messageArea.style.display = 'block';
-                }
-
-                modal.style.display = 'flex';
-            } else {
-                messageArea.textContent = 'Erro ao carregar detalhes do agendamento.';
-                messageArea.classList.add('message-error');
-                messageArea.style.display = 'block';
-                modal.style.display = 'flex';
-            }
-        } catch (error) {
-            messageArea.textContent = 'Erro ao conectar com o servidor.';
-            messageArea.classList.add('message-error');
-            messageArea.style.display = 'block';
-            modal.style.display = 'flex';
-            console.error('Erro na requisição:', error);
-        }
-    }
-
-    
-
-    // Logout
     function logout() {
-        localStorage.removeItem('jwtToken');
-        localStorage.removeItem('userProfile');
-        localStorage.removeItem('userName');
+        localStorage.clear();
         window.location.href = 'index.html';
     }
+
+    // --- Event Listeners ---
+    logoutBtn.addEventListener('click', logout);
+    prevWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() - 7); await renderCalendar(); });
+    nextWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); await renderCalendar(); });
+    closeModalBtn.addEventListener('click', () => bookingModal.style.display = 'none');
+    window.addEventListener('click', (event) => { if (event.target == bookingModal) bookingModal.style.display = 'none'; });
+    bookingForm.addEventListener('submit', async (e) => { e.preventDefault(); await (bookingForm.dataset.bookingId ? updateBooking(bookingForm.dataset.bookingId) : createBooking()); });
+    deleteBookingBtn.addEventListener('click', () => { if (bookingForm.dataset.bookingId) deleteBooking(bookingForm.dataset.bookingId); });
+    
+    if (localStorage.getItem('userProfile') === 'Administrador') {
+        manageRoomsBtn.style.display = 'block';
+        manageRoomsBtn.addEventListener('click', openRoomManagementModal);
+        addNewRoomBtn.addEventListener('click', addNewRoom);
+        editRoomForm.addEventListener('submit', updateRoom);
+        roomManagementModal.querySelector('.close-btn').addEventListener('click', () => roomManagementModal.style.display = 'none');
+        editRoomModal.querySelector('.close-btn').addEventListener('click', () => editRoomModal.style.display = 'none');
+        roomManagementList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('edit-room-btn')) openEditRoomModal(rooms.find(r => r.id === parseInt(e.target.dataset.roomId)));
+            if (e.target.classList.contains('delete-room-btn')) deleteRoom(parseInt(e.target.dataset.roomId));
+            if (e.target.classList.contains('toggle-room-status-btn')) toggleRoomStatus(parseInt(e.target.dataset.roomId));
+        });
+    } else {
+        manageRoomsBtn.style.display = 'none';
+    }
+
+    // --- Carga Inicial ---
+    await fetchRooms();
+    await renderCalendar();
 });
