@@ -1,0 +1,20 @@
+/
+├── .env                  # Variáveis de ambiente
+├── requirements.txt      # Dependências do projeto
+├── run.py                # Ponto de entrada da aplicação
+│
+└── app/
+    ├── __init__.py         # Inicialização do Flask
+    ├── config.py           # Configurações do ambiente
+    ├── models.py           # Modelos de dados (representação das tabelas)
+    ├── routes.py           # Definição das rotas (endpoints)
+    │
+    ├── services/           # Lógica de negócio
+    │   ├── __init__.py
+    │   ├── auth_service.py
+    │   ├── room_service.py
+    │   └── booking_service.py
+    │
+    └── utils/              # Funções de utilidade
+        ├── __init__.py
+        └── db_connection.py  # Conexão com o banco Oracle

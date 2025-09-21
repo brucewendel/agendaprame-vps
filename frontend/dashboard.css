@@ -1,0 +1,772 @@
+/* Importa fontes do Google Fonts se desejar */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300,400,500,600,700&display=swap');
+
+/* Variáveis de Cores */
+:root {
+    --primary-color: #007bff;
+    --danger-color: #dc3545;
+    --success-color: #28a745;
+    --background-dark: #181f36;
+    --card-dark: #222a44;
+    --text-dark: #f7f9fc;
+    --border-radius: 8px;
+    --light-border-color: #2c3556;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Base styles */
+body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--background-dark);
+    color: var(--text-dark);
+}
+
+.card {
+    background: var(--card-dark);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-dark);
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111827;
+    color: #e0e0e0;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--light-border-color);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.company-logo {
+    height: 40px;
+    margin-right: 1rem;
+}
+
+.header-title {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.header-subtitle {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #7daaff;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#user-name {
+    font-weight: bold;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.logout-btn {
+    background: var(--danger-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.logout-btn:hover {
+    background: #b71c1c;
+}
+
+.dashboard-container {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.room-panel {
+    min-width: 260px;
+    max-width: 300px;
+}
+
+.room-panel h2 {
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.room-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.room-tab {
+    background: none;
+    border: none;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.room-tab.active {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+}
+
+.room-tab .edit-room,
+.room-tab .delete-room {
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 1.1em;
+    color: #888;
+    transition: color 0.2s;
+}
+
+.room-tab .edit-room:hover {
+    color: var(--primary-color);
+}
+
+.room-tab .delete-room:hover {
+    color: var(--danger-color);
+}
+
+/* Botão de adicionar sala */
+#add-room-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 0;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#add-room-btn:hover {
+    background: #0056b3;
+}
+
+.main-content-area {
+    flex: 1;
+    min-width: 0;
+    background: #19213a;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+/* --- Calendar Controls --- */
+.calendar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.calendar-title {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0;
+    color: #7daaff;
+}
+
+.nav-button {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.nav-button:hover {
+    background: #0056b3;
+}
+
+/* --- Calendar Grid --- */
+.calendar-grid-wrapper {
+    margin-top: 1rem;
+}
+
+.calendar-grid-headers {
+    display: grid;
+    grid-template-columns: 80px repeat(6, 1fr); /* 80px para horários + 6 dias */
+    text-align: center;
+    border-bottom: 1px solid var(--light-border-color);
+    margin-bottom: 1rem;
+    gap: 0;
+}
+
+.calendar-hours-header {
+    font-weight: 500;
+    padding: 0.5rem 0;
+    color: #fff;
+    background: #22305a;
+    border-radius: 4px 4px 0 0;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.calendar-day-header {
+    font-weight: 500;
+    padding: 0.5rem 0;
+    color: #fff;
+    background: #22305a;
+    border-radius: 4px 4px 0 0;
+}
+
+.calendar-grid-container {
+    display: flex;
+    width: 100%;
+}
+
+.calendar-hours {
+    width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-right: 8px;
+}
+
+.calendar-hours > div {
+    height: 40px;
+    line-height: 40px;
+    color: #bfcfff;
+    font-size: 0.95rem;
+    border-bottom: 1px dashed #2c3556;
+}
+
+.calendar-grid-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+}
+
+.calendar-day-cell {
+    position: relative;
+    display: flex; /* Alterado para flex */
+    flex-direction: column;
+    border-right: 1px solid #2c3556; /* Adiciona linha divisória entre os dias */
+}
+
+.calendar-day-cell:last-child {
+    border-right: none;
+}
+
+/* Novo container para o conteúdo da célula do dia */
+.day-cell-content {
+    position: relative;
+    width: 100%;
+    height: 560px; /* 14 horários x 40px */
+}
+.time-slot {
+    width: 100%;
+    height: 40px;
+    border-bottom: 1px dashed #2c3556;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.2s;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.time-slot:hover {
+    background: #22305a;
+}
+
+.booking-block {
+    background: var(--success-color);
+    color: #fff;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 8px rgba(40,167,69,0.08);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    position: absolute;
+    width: 100%; /* Ocupa toda a largura do contêiner pai */
+    z-index: 2;
+    cursor: pointer;
+    opacity: 0.95;
+    box-sizing: border-box;
+}
+
+/* --- Loading Message --- */
+.loading-message {
+    text-align: center;
+    margin-top: 1rem;
+    color: #7daaff;
+    font-size: 1.1rem;
+}
+
+/* --- Modal --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(24,31,54,0.85);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--card-dark);
+    color: var(--text-dark);
+    border-radius: var(--border-radius);
+    padding: 2rem 2rem;
+    min-width: 380px;
+    max-width: 480px;
+    box-shadow: var(--shadow);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 auto;
+}
+
+.close-btn {
+    position: absolute;
+    top: 18px;
+    right: 24px;
+    font-size: 1.7rem;
+    cursor: pointer;
+    color: #7daaff;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+.input-group {
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.input-group label {
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: inherit;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 4px;
+    border: 1px solid #2c3556;
+    background: #22305a;
+    color: #fff;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* Ajuste visual dos checkboxes e legendas do modal */
+.equipment-options {
+    margin-bottom: 1.2rem;
+}
+
+.equipment-options p {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.equipment-options label {
+    margin: 0;
+    font-size: 1rem;
+    color: inherit;
+    font-weight: 400;
+}
+
+.equipment-options input[type="checkbox"] {
+    accent-color: var(--primary-color);
+    width: 18px;
+    height: 18px;
+    margin-right: 0.4rem;
+}
+
+/* Botão enviar estilizado */
+.primary-button {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.9rem 2rem;
+    font-weight: bold;
+    font-size: 1.08rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-top: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.primary-button:hover,
+.primary-button:focus {
+    background: #0056b3;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.18);
+    outline: none;
+}
+
+/* Botão excluir no padrão visual */
+.danger-button {
+    background: var(--danger-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.9rem 2rem;
+    font-weight: bold;
+    font-size: 1.08rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(220,53,69,0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-top: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.danger-button:hover,
+.danger-button:focus {
+    background: #b71c1c;
+    box-shadow: 0 4px 16px rgba(220,53,69,0.18);
+    outline: none;
+}
+
+/* Centraliza o botão Agendar no modal */
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Footer --- */
+.main-footer {
+    background-color: #111827;
+    color: #e0e0e0;
+    padding: 3rem 2rem 1.5rem;
+    font-size: 0.9rem;
+    margin-top: 4rem;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto 2rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 2rem;
+}
+
+.footer-col h3 {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-col ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-col ul li a,
+.footer-col .contact-card a {
+    color: #e0e0e0;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-col ul li a:hover,
+.footer-col .contact-card a:hover {
+    color: var(--primary-color);
+}
+
+.footer-col.company-info .footer-logo {
+    height: 40px;
+    margin-bottom: 1rem;
+    filter: brightness(0) invert(1);
+}
+
+.footer-col.company-info p {
+    margin-bottom: 1.5rem;
+    color: #b0b0b0;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+}
+.contact-item i {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+.contact-item span {
+    color: #e0e0e0;
+}
+
+.contact-details .contact-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    background-color: #1e293b;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.contact-details .contact-card:hover {
+    background-color: #2a3b53;
+}
+
+.contact-details .contact-card i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+.contact-details .contact-card a {
+    font-weight: 500;
+}
+
+.footer-bottom {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    color: #b0b0b0;
+}
+
+.social-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.social-links span {
+    font-weight: 600;
+    color: #e0e0e0;
+}
+.social-links a {
+    color: #e0e0e0;
+    font-size: 1.4rem;
+    transition: color 0.3s;
+}
+.social-links a:hover {
+    color: var(--primary-color);
+}
+
+.copyright-info {
+    text-align: right;
+    font-size: 0.8rem;
+}
+.copyright-info a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.copyright-info a:hover {
+    text-decoration: underline;
+}
+
+/* Responsividade Básica */
+@media (max-width: 1024px) {
+    .dashboard-container {
+        flex-direction: column;
+    }
+    .room-panel {
+        width: 100%;
+        flex-basis: auto;
+    }
+    .main-content-area {
+        width: 100%;
+    }
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .footer-col.company-info {
+        grid-column: span 2;
+    }
+    .footer-col.contact-details {
+        grid-column: span 2;
+    }
+}
+
+.room-management-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--light-border-color);
+}
+
+.room-management-item:last-child {
+    border-bottom: none;
+}
+
+.room-management-item span {
+    font-size: 1rem;
+}
+
+.room-management-item div {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#manage-rooms-btn {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    .header-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .dashboard-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+    .room-panel, .main-content-area, .calendar-controls, .calendar-grid-wrapper {
+        padding: 1rem;
+    }
+    .footer-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .footer-col.company-info,
+    .footer-col.contact-details {
+        grid-column: span 1;
+        text-align: center;
+    }
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    .social-links {
+        justify-content: center;
+    }
+    .copyright-info {
+        text-align: center;
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-container {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    .room-panel {
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+    .main-content-area {
+        min-width: 0;
+    }
+    .calendar-grid-headers,
+    .calendar-grid-body {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+    .dashboard-container {
+        padding: 0.5rem;
+    }
+    .modal-content {
+        min-width: 96vw;
+        max-width: 98vw;
+        padding: 1rem;
+    }
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.93rem;
+    }
+}

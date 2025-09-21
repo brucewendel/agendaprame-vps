@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Agendamento de Salas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <img src="https://www.mx2tech.com.br/images/Logo%20Mx2Tech%20no%20Text.png" alt="Logo da Empresa" class="login-logo">
+            <h1>Acessar Sistema</h1>
+            <p>Faça login para continuar</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login">Usuário</label>
+                    <input type="text" id="login" name="login" required>
+                </div>
+                <div class="input-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="message-area" class="message-area"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Agendamento de Salas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dark-mode">
+    <header class="main-header">
+        <div class="header-left">
+            <img src="https://www.mx2tech.com.br/images/Logo%20Mx2Tech%20no%20Text.png" alt="Logo da Empresa" class="company-logo">
+            <h1 class="header-title">Agendamento de Salas <span class="header-subtitle">/ Dashboard</span></h1>
+        </div>
+        <div class="header-right">
+            <span id="user-name"></span>
+            <button id="logout-btn" class="logout-btn">Sair <i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <aside class="room-panel card">
+            <h2>Salas de Reunião</h2>
+            <div id="room-list" class="room-tabs">
+                <!-- As abas de sala e botões de adicionar/editar/excluir serão inseridos pelo JS -->
+            </div>
+            <button id="manage-rooms-btn" class="primary-button">Gerenciar Salas</button>
+        </aside>
+
+        <section class="main-content-area">
+            <div class="calendar-controls card">
+                <button id="prev-week-btn" class="nav-button"><i class="fas fa-chevron-left"></i></button>
+                <h2 id="calendar-title" class="calendar-title"></h2>
+                <button id="next-week-btn" class="nav-button"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="calendar-grid-wrapper card">
+                <div id="calendar-grid-headers" class="calendar-grid-headers"></div>
+                <div class="calendar-grid-container">
+                    <div class="calendar-hours"></div>
+                    <div id="calendar-grid-body" class="calendar-grid-body"></div>
+                </div>
+            </div>
+            <div id="loading-message" class="loading-message">Carregando dados...</div>
+        </section>
+    </main>
+
+    <div id="booking-modal" class="modal">
+        <div class="modal-content card">
+            <span class="close-btn">&times;</span>
+            <h3>Detalhes do Agendamento</h3>
+            <form id="booking-form">
+                <div class="input-group">
+                    <label for="modal-titulo">Título da Reunião</label>
+                    <input type="text" id="modal-titulo" required>
+                </div>
+                <div class="input-group">
+                    <label for="modal-sala">Sala</label>
+                    <input type="text" id="modal-sala" disabled>
+                </div>
+                <div class="input-group">
+                    <label for="modal-inicio">Início</label>
+                    <input type="datetime-local" id="modal-inicio" required>
+                </div>
+                <div class="input-group">
+                    <label for="modal-fim">Término</label>
+                    <input type="datetime-local" id="modal-fim" required>
+                </div>
+                <div class="input-group">
+                    <label for="modal-descricao">Descrição (opcional)</label>
+                    <textarea id="modal-descricao"></textarea>
+                </div>
+                <div class="equipment-options">
+                    <p>Equipamentos:</p>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modal-projetor">
+                        <label for="modal-projetor">Projetor</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modal-regua-energia">
+                        <label for="modal-regua-energia">Régua de Energia</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modal-suporte-ti">
+                        <label for="modal-suporte-ti">Suporte de TI</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="primary-button">Agendar</button>
+                    <button type="button" id="delete-booking-btn" class="danger-button" style="display:none;">Excluir</button>
+                </div>
+            </form>
+            <div id="modal-message-area" class="message-area"></div>
+        </div>
+    </div>
+
+    <div id="room-management-modal" class="modal" style="display:none;">
+        <div class="modal-content card">
+            <span class="close-btn" onclick="document.getElementById('room-management-modal').style.display='none'">&times;</span>
+            <h3>Gerenciar Salas</h3>
+            <div id="room-management-list"></div>
+            <div class="modal-actions">
+                <button id="add-new-room-btn" class="primary-button">Adicionar Nova Sala</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-room-modal" class="modal" style="display:none;">
+        <div class="modal-content card">
+            <span class="close-btn" onclick="document.getElementById('edit-room-modal').style.display='none'">&times;</span>
+            <h3>Editar Sala</h3>
+            <form id="edit-room-form">
+                <input type="hidden" id="edit-room-id">
+                <div class="input-group">
+                    <label for="edit-room-name">Nome da Sala</label>
+                    <input type="text" id="edit-room-name" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="primary-button">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    
+
+    
+    
+    <footer class="main-footer">
+        <div class="footer-grid">
+            <div class="footer-col company-info">
+                <img src="https://www.mx2tech.com.br/images/Logo%20Mx2Tech%20no%20Text.png" alt="MX2Tech Logo" class="footer-logo">
+                <p>Transformando ideias em soluções tecnológicas inovadoras. O poder da tecnologia a seu favor.</p>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Fortaleza, Ceará - Brasil</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Seg - Sex: 8h às 18h</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-headset"></i>
+                    <span>Plantões: 24h todos os dias</span>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Empresa</h3>
+                <ul>
+                    <li><a href="#">Início</a></li>
+                    <li><a href="#">Nossos Produtos</a></li>
+                    <li><a href="#">Trabalhe Conosco</a></li>
+                    <li><a href="#">Cultura</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Soluções</h3>
+                <ul>
+                    <li><a href="#">MXControl</a></li>
+                    <li><a href="#">MXZAP</a></li>
+                    <li><a href="#">Suporte ERP TOTVS</a></li>
+                    <li><a href="#">Desenvolvimento</a></li>
+                    <li><a href="#">Consultoria</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Suporte</h3>
+                <ul>
+                    <li><a href="#">Central do Cliente</a></li>
+                    <li><a href="#">Abrir Chamado</a></li>
+                    <li><a href="#">Suporte Técnico</a></li>
+                </ul>
+            </div>
+            <div class="footer-col contact-details">
+                <h3>Contato</h3>
+                <div class="contact-card">
+                    <i class="fab fa-whatsapp"></i>
+                    <a href="https://wa.me/5585992136052">(85) 99213-6052</a>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:+558540426848">(85) 4042-6848</a>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:falecom@mx2tech.com.br">falecom@mx2tech.com.br</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="social-links">
+                <span>SIGA-NOS:</span>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="copyright-info">
+                © 2025 MX2Tech. Todos os direitos reservados.<br>
+                CNPJ: 48.783.157/0001-67 | Fortaleza - CE<br>
+                <a href="#">Política de Privacidade</a> • <a href="#">Termos de Uso</a>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
