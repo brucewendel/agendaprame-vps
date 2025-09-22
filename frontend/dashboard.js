@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function renderCalendar() {
+        renderHours(); // Garante que as horas sejam renderizadas
         if (currentRoomId === null) {
             calendarGridBody.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Nenhuma sala ativa encontrada.</div>';
             calendarGridHeaders.innerHTML = '';
@@ -446,7 +447,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         manageRoomsBtn.style.display = 'none';
     }
 
+    roomList.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('room-tab')) {
+            const roomId = parseInt(e.target.dataset.roomId);
+            if (roomId !== currentRoomId) {
+                currentRoomId = roomId;
+                renderRoomTabs(rooms); // Re-render to update active tab
+                await renderCalendar();
+            }
+        }
+    });
+
     // --- Carga Inicial ---
     await fetchRooms();
-    await renderCalendar();
+    if (currentRoomId) {
+        await renderCalendar();
+    }
 });
