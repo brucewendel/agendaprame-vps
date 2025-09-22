@@ -76,6 +76,21 @@ input:focus {
     border-color: var(--primary-color);
 }
 
+.input-group-remember {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.input-group-remember label {
+    margin: 0 0 0 0.5rem;
+    font-weight: normal;
+}
+
+.input-group-remember input {
+    width: auto;
+}
+
 button {
     width: 100%;
     padding: 0.75rem;

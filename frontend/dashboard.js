@@ -295,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         bookingsForRoom.forEach(booking => {
             const start = new Date(booking.DATA_INICIO);
             const end = new Date(booking.DATA_FIM);
+            const isPast = end < new Date(); // Check if booking is in the past
             const startDay = start.getDay();
             if (startDay === 0) return; // Ignora domingo
 
@@ -306,6 +307,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (dayCellContent) {
                 const bookingBlock = document.createElement('div');
                 bookingBlock.className = 'booking-block';
+                if (isPast) {
+                    bookingBlock.classList.add('past-booking'); // Add class for past bookings
+                }
                 bookingBlock.textContent = booking.TITULO;
                 bookingBlock.dataset.bookingId = booking.ID_AGENDAMENTO;
                 const slotHeight = 40;
@@ -343,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             const isOwner = booking.ID_USUARIO === userId;
             const isAdmin = localStorage.getItem('userProfile') === 'Administrador';
+            const isPastBooking = new Date(booking.DATA_FIM) < new Date(); // Check if the booking is in the past
 
             bookingForm.setAttribute('data-booking-id', bookingId);
             document.getElementById('modal-titulo').value = booking.TITULO;
@@ -358,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('Régua de Energia') : false;
             document.getElementById('modal-suporte-ti').checked = equipmentMatch ? equipmentMatch[0].includes('Suporte de TI') : false;
 
-            const canEdit = isAdmin || isOwner;
+            const canEdit = (isAdmin || isOwner) && !isPastBooking; // User can edit only if it's not a past booking
             deleteBookingBtn.style.display = canEdit ? 'inline-block' : 'none';
             bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-block' : 'none';
             Array.from(bookingForm.elements).forEach(el => el.disabled = !canEdit);

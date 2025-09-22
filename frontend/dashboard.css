@@ -634,27 +634,18 @@ textarea {
     text-decoration: underline;
 }
 
-/* Responsividade Básica */
-@media (max-width: 1024px) {
-    .dashboard-container {
-        flex-direction: column;
-    }
-    .room-panel {
-        width: 100%;
-        flex-basis: auto;
-    }
-    .main-content-area {
-        width: 100%;
-    }
-    .footer-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .footer-col.company-info {
-        grid-column: span 2;
-    }
-    .footer-col.contact-details {
-        grid-column: span 2;
-    }
+.past-booking {
+    background-color: #6c757d;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.booking-block:hover {
+    opacity: 1;
+}
+
+.past-booking:hover {
+    opacity: 0.7; /* Mantém a opacidade ao passar o mouse */
 }
 
 .room-management-item {
