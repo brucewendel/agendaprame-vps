@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const myBookingsModal = document.getElementById('my-bookings-modal');
     const myBookingsList = document.getElementById('my-bookings-list');
     const myBookingsTitle = document.getElementById('my-bookings-title');
+    const spinnerOverlay = document.getElementById('spinner-overlay');
 
     // New elements for user search
     const changeOwnerBtn = document.getElementById('change-owner-btn');
@@ -704,19 +705,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         const startDate = new Date(inicioValue);
         const endDate = new Date(fimValue);
 
-        // Block creation of bookings in the past (editing is already blocked by disabled fields)
         if (startDate < now && !bookingForm.dataset.bookingId) {
             showAlert('Não é possível criar agendamentos para datas ou horários passados.');
             return;
         }
 
-        // Verifica se o horário de término é posterior ao de início
         if (endDate <= startDate) {
             showAlert('O horário de término deve ser posterior ao horário de início.');
             return;
         }
 
-        await (bookingForm.dataset.bookingId ? updateBooking(bookingForm.dataset.bookingId) : createBooking());
+        spinnerOverlay.style.display = 'flex'; // Mostra o loader
+        try {
+            await (bookingForm.dataset.bookingId ? updateBooking(bookingForm.dataset.bookingId) : createBooking());
+        } finally {
+            spinnerOverlay.style.display = 'none'; // Esconde o loader
+        }
     });
     deleteBookingBtn.addEventListener('click', () => { if (bookingForm.dataset.bookingId) deleteBooking(bookingForm.dataset.bookingId); });
     myBookingsBtn.addEventListener('click', openMyBookingsModal);

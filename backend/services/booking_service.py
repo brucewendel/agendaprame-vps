@@ -1,6 +1,7 @@
 import cx_Oracle
+import threading
 from utils.db_conection import db_manager
-from services import senderzap_service # Importa o novo serviço
+from services import senderzap_service, email_service # Importa os novos serviços
 from datetime import datetime, timedelta
 
 def create_booking(data, user_id):
@@ -105,11 +106,11 @@ def create_booking(data, user_id):
         db_manager.connection.commit()
 
         # --- Início da Lógica de Notificação ---
+        dt_inicio_obj = datetime.strptime(inicio, '%Y-%m-%dT%H:%M:%S')
+        dt_fim_obj = datetime.strptime(fim, '%Y-%m-%dT%H:%M:%S')
+
+        # 1. Notificação por WhatsApp
         try:
-            # Formata a mensagem para o WhatsApp
-            dt_inicio_obj = datetime.strptime(inicio, '%Y-%m-%dT%H:%M:%S')
-            dt_fim_obj = datetime.strptime(fim, '%Y-%m-%dT%H:%M:%S')
-            
             dt_inicio_fmt = dt_inicio_obj.strftime('%d/%m/%Y às %H:%M')
             dt_fim_fmt = dt_fim_obj.strftime('%H:%M')
 
@@ -128,6 +129,36 @@ def create_booking(data, user_id):
                 senderzap_service.send_whatsapp_message(senderzap_service.IT_PHONE, mensagem)
         except Exception as e:
             print(f"AVISO: O agendamento foi criado, mas a notificação por WhatsApp falhou: {e}")
+
+        # 2. Notificação por E-mail com convite .ics
+        try:
+            # Busca o e-mail e nome do usuário que agendou
+            cursor.execute("SELECT email, nome FROM pcempr WHERE matricula = :user_id", user_id=user_id)
+            user_data = cursor.fetchone()
+
+            if user_data and user_data[0]:
+                recipient_email, user_name = user_data
+                
+                booking_details = {
+                    'summary': titulo,
+                    'dtstart': dt_inicio_obj,
+                    'dtend': dt_fim_obj,
+                    'description': descricao,
+                    'location': sala_nome,
+                    'user_name': user_name.strip() # Adiciona o nome do usuário aos detalhes
+                }
+                
+                # Executa o envio de e-mail em uma thread separada para não bloquear a resposta
+                email_thread = threading.Thread(
+                    target=email_service.send_booking_confirmation,
+                    args=(recipient_email, booking_details)
+                )
+                email_thread.start()
+            else:
+                print(f"AVISO: E-mail do usuário com ID {user_id} não encontrado. Convite não enviado.")
+
+        except Exception as e:
+            print(f"AVISO: O agendamento foi criado, mas a notificação por e-mail falhou: {e}")
         # --- Fim da Lógica de Notificação ---
 
         return {
@@ -295,6 +326,40 @@ def update_booking(booking_id, data, user_id, user_profile):
         cursor.execute(sql_update_booking, params)
 
         db_manager.connection.commit()
+
+        # --- Início da Lógica de Notificação de Atualização ---
+        try:
+            final_owner_id = params.get('id_usuario', booking_owner[0])
+
+            cursor.execute("SELECT email, nome FROM pcempr WHERE matricula = :user_id", user_id=final_owner_id)
+            user_data = cursor.fetchone()
+
+            if user_data and user_data[0]:
+                recipient_email, user_name = user_data
+                
+                # Precisamos do nome da sala, que não está no 'data' por padrão
+                # Vamos buscar no banco para garantir
+                cursor.execute("SELECT NOME_SALA FROM mx2_salas WHERE id_sala = :sala_id", sala_id=sala_id)
+                sala_nome_result = cursor.fetchone()
+                sala_nome = sala_nome_result[0] if sala_nome_result else f"ID {sala_id}"
+
+                booking_details = {
+                    'summary': data.get('titulo'),
+                    'dtstart': datetime.strptime(inicio, '%Y-%m-%dT%H:%M:%S'),
+                    'dtend': datetime.strptime(fim, '%Y-%m-%dT%H:%M:%S'),
+                    'description': data.get('descricao'),
+                    'location': sala_nome,
+                    'user_name': user_name.strip()
+                }
+                
+                email_thread = threading.Thread(
+                    target=email_service.send_booking_update_notification,
+                    args=(recipient_email, booking_details)
+                )
+                email_thread.start()
+        except Exception as e:
+            print(f"AVISO: O agendamento foi atualizado, mas a notificação por e-mail falhou: {e}")
+        # --- Fim da Lógica de Notificação ---
         
         return {
             "id_agendamento": booking_id,
@@ -327,10 +392,20 @@ def delete_booking(booking_id, user_id, user_profile):
 
     try:
         cursor = db_manager.connection.cursor()
-        
-        sql_check_permission = """
-            SELECT ID_USUARIO FROM MX2_AGENDAMENTOS_SALA WHERE ID_AGENDAMENTO = :booking_id
+
+        # --- Coleta de dados para notificação ANTES de deletar ---
+        sql_get_details = """ 
+            SELECT a.TITULO, a.DATA_INICIO, a.DATA_FIM, s.NOME_SALA AS NOME_SALA, u.email, u.nome
+            FROM MX2_AGENDAMENTOS_SALA a
+            LEFT JOIN pcempr u ON a.ID_USUARIO = u.matricula
+            LEFT JOIN mx2_salas s ON a.ID_SALA = s.id_sala
+            WHERE a.ID_AGENDAMENTO = :booking_id
         """
+        cursor.execute(sql_get_details, booking_id=booking_id)
+        notification_details = cursor.fetchone()
+
+        # Checagem de permissão
+        sql_check_permission = "SELECT ID_USUARIO FROM MX2_AGENDAMENTOS_SALA WHERE ID_AGENDAMENTO = :booking_id"
         cursor.execute(sql_check_permission, booking_id=booking_id)
         booking_owner = cursor.fetchone()
         
@@ -340,11 +415,32 @@ def delete_booking(booking_id, user_id, user_profile):
         if user_profile != 'Administrador' and booking_owner[0] != user_id:
             return False, "Você não tem permissão para cancelar este agendamento."
         
-        sql_delete_booking = """
-            DELETE FROM MX2_AGENDAMENTOS_SALA WHERE ID_AGENDAMENTO = :booking_id
-        """
+        # Exclusão do agendamento
+        sql_delete_booking = "DELETE FROM MX2_AGENDAMENTOS_SALA WHERE ID_AGENDAMENTO = :booking_id"
         cursor.execute(sql_delete_booking, booking_id=booking_id)
         db_manager.connection.commit()
+
+        # --- Início da Lógica de Notificação de Cancelamento ---
+        try:
+            if notification_details:
+                summary, dtstart, dtend, location, recipient_email, user_name = notification_details
+                
+                booking_details = {
+                    'summary': summary,
+                    'dtstart': dtstart,
+                    'dtend': dtend,
+                    'location': location,
+                    'user_name': user_name.strip() if user_name else ''
+                }
+
+                email_thread = threading.Thread(
+                    target=email_service.send_booking_cancellation_notification,
+                    args=(recipient_email, booking_details)
+                )
+                email_thread.start()
+        except Exception as e:
+            print(f"AVISO: O agendamento foi cancelado, mas a notificação por e-mail falhou: {e}")
+        # --- Fim da Lógica de Notificação ---
         
         return True, None
 
