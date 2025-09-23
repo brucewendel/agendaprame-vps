@@ -9,6 +9,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     let rooms = [];
     let currentRoomId = null;
+    // New elements for my bookings filters
+    let roomFiltersContainer;
+    let bookingDateSearchInput;
+
+    function getStartOfWeek(date) {
+        const dt = new Date(date);
+        const day = dt.getDay(); // 0 (Sunday) to 6 (Saturday)
+        // Adjust to make Monday the first day of the week.
+        // If Sunday (0), subtract 6 days. If Saturday (6), subtract 5.
+        const diff = dt.getDate() - day + (day === 0 ? -6 : 1); 
+        dt.setDate(diff);
+        dt.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+        return dt;
+    }
+
     let currentWeekStart = getStartOfWeek(new Date());
     let selectedBookingId = null;
 
@@ -35,6 +50,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     const editRoomName = document.getElementById('edit-room-name');
     const logoutBtn = document.getElementById('logout-btn');
     const userNameSpan = document.getElementById('user-name');
+    const myBookingsBtn = document.getElementById('my-bookings-btn');
+    const myBookingsModal = document.getElementById('my-bookings-modal');
+    const myBookingsList = document.getElementById('my-bookings-list');
+    const myBookingsTitle = document.getElementById('my-bookings-title');
+
+    // New elements for user search
+    const changeOwnerBtn = document.getElementById('change-owner-btn');
+    const modalOwnerDisplay = document.getElementById('modal-owner-display');
+    const modalOwnerId = document.getElementById('modal-owner-id');
+    const userSearchModal = document.getElementById('user-search-modal');
+    const userSearchQuery = document.getElementById('user-search-query');
+    const searchByMatriculaRadio = document.getElementById('search-by-matricula');
+    const searchByNameRadio = document.getElementById('search-by-name');
+    const userSearchButton = document.getElementById('user-search-button');
+    const userSearchResults = document.getElementById('user-search-results');
 
     // --- Modal de Alerta Genérico ---
     const alertModal = document.getElementById('alert-modal');
@@ -83,6 +113,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    async function fetchUsers() {
+        try {
+            const response = await fetch('http://127.0.0.1:5000/users', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (response.ok) {
+                return await response.json();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao carregar usuários: ${error.message}`);
+                return [];
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao buscar usuários. Verifique o servidor.');
+            return [];
+        }
+    }
+
+    async function fetchUsersSearch(query, searchBy) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/users/search?query=${query}&search_by=${searchBy}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (response.ok) {
+                return await response.json();
+            } else {
+                const error = await response.json();
+                showAlert(`Erro ao buscar usuários: ${error.message}`);
+                return [];
+            }
+        } catch (error) {
+            showAlert('Erro de conexão ao buscar usuários. Verifique o servidor.');
+            return [];
+        }
+    }
+
     async function fetchBookings(startDate) {
         const toApiFormat = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] + 'T00:00:00';
         const startIso = toApiFormat(startDate);
@@ -95,6 +157,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             return response.ok ? await response.json() : (showAlert('Erro ao carregar agendamentos.'), []);
         } catch (error) {
             showAlert('Erro de conexão ao buscar agendamentos.');
+            return [];
+        }
+    }
+
+    async function fetchUpcomingBookings() {
+        const toApiFormat = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0] + 'T00:00:00';
+        const startIso = toApiFormat(new Date());
+        const endDate = new Date();
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        const endIso = toApiFormat(endDate);
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            return response.ok ? await response.json() : (showAlert('Erro ao carregar seus agendamentos.'), []);
+        } catch (error) {
+            showAlert('Erro de conexão ao buscar seus agendamentos.');
             return [];
         }
     }
@@ -296,7 +374,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             const start = new Date(booking.DATA_INICIO);
             const end = new Date(booking.DATA_FIM);
             const isPast = end < new Date(); // Check if booking is in the past
-            const startDay = start.getDay();
+
+                let ownerName = booking.NOME_USUARIO;
+                if (!ownerName) {
+                    if (booking.ID_USUARIO === userId) {
+                        ownerName = userName;
+                    } else {
+                        ownerName = 'Desconhecido';
+                    }
+                }
+
+                const startDay = start.getDay();
             if (startDay === 0) return; // Ignora domingo
 
             const dayOffset = startDay - 1;
@@ -310,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (isPast) {
                     bookingBlock.classList.add('past-booking'); // Add class for past bookings
                 }
-                bookingBlock.textContent = booking.TITULO;
+                bookingBlock.innerHTML = `${booking.TITULO}<br><small>${ownerName}</small>`;
                 bookingBlock.dataset.bookingId = booking.ID_AGENDAMENTO;
                 const slotHeight = 40;
                 const top = ((start.getHours() - 7) * slotHeight) + (start.getMinutes() * slotHeight / 60);
@@ -331,11 +419,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         const { date, hour } = event.target.dataset;
         bookingForm.reset();
         bookingForm.removeAttribute('data-booking-id');
+
+        // Habilita todos os campos do formulário, exceto o da sala
+        Array.from(bookingForm.elements).forEach(el => el.disabled = false);
+        document.getElementById('modal-sala').disabled = true;
+
+        // Set owner display and ID for new booking
+        modalOwnerDisplay.textContent = userName;
+        modalOwnerId.value = userId;
+        changeOwnerBtn.style.display = 'none'; // Hide change owner button for creation
+        modalOwnerDisplay.style.display = 'inline-block'; // Show the span
+
         document.getElementById('modal-sala').value = rooms.find(r => r.id === currentRoomId).name;
         document.getElementById('modal-inicio').value = `${date}T${hour.padStart(2, '0')}:00`;
         document.getElementById('modal-fim').value = `${date}T${(parseInt(hour) + 1).toString().padStart(2, '0')}:00`;
         deleteBookingBtn.style.display = 'none';
         bookingForm.querySelector('button[type="submit"]').textContent = 'Agendar';
+        bookingForm.querySelector('button[type="submit"]').style.display = 'inline-block';
         bookingModal.style.display = 'flex';
     }
 
@@ -349,9 +449,33 @@ document.addEventListener('DOMContentLoaded', async function() {
             const isAdmin = localStorage.getItem('userProfile') === 'Administrador';
             const isPastBooking = new Date(booking.DATA_FIM) < new Date(); // Check if the booking is in the past
 
+            const canEdit = (isAdmin || isOwner) && !isPastBooking; 
+
+            let ownerName = booking.NOME_USUARIO;
+            if (!ownerName) {
+                if (booking.ID_USUARIO === userId) {
+                    ownerName = userName;
+                } else {
+                    ownerName = 'Usuário desconhecido';
+                }
+            }
+
             bookingForm.setAttribute('data-booking-id', bookingId);
             document.getElementById('modal-titulo').value = booking.TITULO;
             document.getElementById('modal-sala').value = rooms.find(r => r.id === booking.ID_SALA).name;
+            
+            // Handle owner field display
+            modalOwnerDisplay.textContent = ownerName;
+            modalOwnerId.value = booking.ID_USUARIO;
+            modalOwnerDisplay.style.display = 'inline-block';
+
+            // Show "Change Owner" button only for Admins on non-expired bookings
+            if (isAdmin && !isPastBooking) {
+                changeOwnerBtn.style.display = 'inline-block';
+            } else {
+                changeOwnerBtn.style.display = 'none';
+            }
+
             document.getElementById('modal-inicio').value = booking.DATA_INICIO.replace(' ', 'T');
             document.getElementById('modal-fim').value = booking.DATA_FIM.replace(' ', 'T');
             
@@ -363,7 +487,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('Régua de Energia') : false;
             document.getElementById('modal-suporte-ti').checked = equipmentMatch ? equipmentMatch[0].includes('Suporte de TI') : false;
 
-            const canEdit = (isAdmin || isOwner) && !isPastBooking; // User can edit only if it's not a past booking
             deleteBookingBtn.style.display = canEdit ? 'inline-block' : 'none';
             bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-block' : 'none';
             Array.from(bookingForm.elements).forEach(el => el.disabled = !canEdit);
@@ -373,6 +496,120 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) {
             showAlert(error.message);
         }
+    }
+
+    function renderMyBookingsList(bookings) {
+        if (bookings.length === 0) {
+            myBookingsList.innerHTML = '<p>Nenhum agendamento futuro encontrado.</p>';
+            return;
+        }
+
+        const sortedBookings = bookings.sort((a, b) => new Date(a.DATA_INICIO) - new Date(b.DATA_INICIO));
+
+        myBookingsList.innerHTML = sortedBookings.map(booking => {
+            const start = new Date(booking.DATA_INICIO);
+            const end = new Date(booking.DATA_FIM);
+            const room = rooms.find(r => r.id === booking.ID_SALA);
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+            return `
+                <div class="booking-item">
+                    <h4>${booking.TITULO}</h4>
+                    <p><strong>Sala:</strong> ${room ? room.name : 'Desconhecida'}</p>
+                    <p><strong>Início:</strong> ${start.toLocaleDateString('pt-BR', options)}</p>
+                    <p><strong>Fim:</strong> ${end.toLocaleDateString('pt-BR', options)}</p>
+                    ${booking.NOME_USUARIO ? `<p><strong>Usuário:</strong> ${booking.NOME_USUARIO}</p>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    let allMyBookings = []; // Store all fetched bookings
+    let currentMyBookingsRoomFilter = 'all'; // 'all' or a room ID
+    let currentMyBookingsDateFilter = ''; // YYYY-MM-DD format
+
+    async function openMyBookingsModal() {
+        const isAdmin = localStorage.getItem('userProfile') === 'Administrador';
+        myBookingsTitle.textContent = isAdmin ? 'Todos os Agendamentos Futuros' : 'Meus Agendamentos Futuros';
+
+        // Fetch all upcoming bookings once
+        allMyBookings = await fetchUpcomingBookings();
+        
+        // Inject filter HTML if not already present
+        const modalContent = myBookingsModal.querySelector('.modal-content');
+        if (!modalContent.querySelector('#my-bookings-filters')) {
+            const filterHtml = `
+                <div id="my-bookings-filters">
+                    <div id="room-filters"></div>
+                    <div id="date-filter">
+                        <label for="booking-date-search">Pesquisar por Data:</label>
+                        <input type="date" id="booking-date-search">
+                    </div>
+                </div>
+            `;
+            // Insert after the title
+            myBookingsTitle.insertAdjacentHTML('afterend', filterHtml);
+            // Re-get references after injecting HTML
+            roomFiltersContainer = document.getElementById('room-filters');
+            bookingDateSearchInput = document.getElementById('booking-date-search');
+
+            // Add event listeners
+            bookingDateSearchInput.addEventListener('change', (e) => {
+                currentMyBookingsDateFilter = e.target.value;
+                renderFilteredMyBookings();
+            });
+        }
+
+        renderRoomFiltersForMyBookings(); // Render room filter buttons
+        bookingDateSearchInput.value = currentMyBookingsDateFilter; // Set date input value
+
+        renderFilteredMyBookings(); // Apply filters and render
+        myBookingsModal.style.display = 'flex';
+    }
+
+    function renderRoomFiltersForMyBookings() {
+        const allRoomsOption = { id: 'all', name: 'Todas as Salas' };
+        const roomsToDisplay = [allRoomsOption, ...rooms.filter(r => r.active)]; // Include active rooms
+
+        roomFiltersContainer.innerHTML = roomsToDisplay.map(room => `
+            <button class="room-filter-btn ${currentMyBookingsRoomFilter === String(room.id) ? 'active' : ''}" data-room-id="${room.id}">
+                ${room.name}
+            </button>
+        `).join('');
+
+        roomFiltersContainer.querySelectorAll('.room-filter-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentMyBookingsRoomFilter = e.target.dataset.roomId;
+                renderRoomFiltersForMyBookings(); // Re-render to update active state
+                renderFilteredMyBookings();
+            });
+        });
+    }
+
+    function renderFilteredMyBookings() {
+        const isAdmin = localStorage.getItem('userProfile') === 'Administrador';
+        let filtered = allMyBookings;
+
+        // Filter by user if not admin
+        if (!isAdmin) {
+            filtered = filtered.filter(b => b.ID_USUARIO === userId);
+        }
+
+        // Filter by room
+        if (currentMyBookingsRoomFilter !== 'all') {
+            filtered = filtered.filter(b => b.ID_SALA === parseInt(currentMyBookingsRoomFilter));
+        }
+
+        // Filter by date
+        if (currentMyBookingsDateFilter) {
+            filtered = filtered.filter(b => {
+                const bookingDate = new Date(b.DATA_INICIO).toISOString().split('T')[0];
+                return bookingDate === currentMyBookingsDateFilter;
+            });
+        }
+
+        renderMyBookingsList(filtered);
     }
 
     function openRoomManagementModal() {
@@ -394,13 +631,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         editRoomModal.style.display = 'flex';
     }
 
-    // --- Helpers ---
-    function getStartOfWeek(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(new Date(d.setDate(diff)).setHours(0, 0, 0, 0));
+    function openUserSearchModal() {
+        userSearchQuery.value = '';
+        searchByMatriculaRadio.checked = true;
+        userSearchResults.innerHTML = '';
+        userSearchModal.style.display = 'flex';
     }
+
+    function renderUserSearchResults(users) {
+        if (users.length === 0) {
+            userSearchResults.innerHTML = '<p>Nenhum usuário encontrado.</p>';
+            return;
+        }
+        userSearchResults.innerHTML = users.map(user => `
+            <div class="user-search-result-item">
+                <span>${user.name} (${user.id})</span>
+                <button type="button" class="primary-button select-user-btn" data-user-id="${user.id}" data-user-name="${user.name}">Selecionar</button>
+            </div>
+        `).join('');
+    }
+
+    function selectUserFromSearch(userId, userName) {
+        modalOwnerDisplay.textContent = userName;
+        modalOwnerId.value = userId;
+        userSearchModal.style.display = 'none';
+    }
+
+    
 
     function buildBookingPayload() {
         const equipmentObs = [
@@ -410,20 +667,25 @@ document.addEventListener('DOMContentLoaded', async function() {
         ].filter(Boolean);
 
         const userDescription = document.getElementById('modal-descricao').value;
-        const finalDescription = [userDescription, equipmentObs.length > 0 ? `Equipamentos necessários:\n${equipmentObs.join('\n')}` : ''].filter(Boolean).join('\n\n');
+        const finalDescription = [userDescription, equipmentObs.length > 0 ? 'Equipamentos necessários:\n' + equipmentObs.join('\n') : ''].filter(Boolean).join('\n\n');
 
-        return {
+        const payload = {
             sala_id: currentRoomId,
             inicio: document.getElementById('modal-inicio').value,
             fim: document.getElementById('modal-fim').value,
             titulo: document.getElementById('modal-titulo').value,
             descricao: finalDescription,
-            sala_nome: rooms.find(r => r.id === currentRoomId).name
+            sala_nome: rooms.find(r => r.id === currentRoomId).name,
+            id_usuario: parseInt(document.getElementById('modal-owner-id').value)
         };
+
+        return payload;
     }
 
     function logout() {
-        localStorage.clear();
+        localStorage.removeItem('jwtToken');
+        localStorage.removeItem('userProfile');
+        localStorage.removeItem('userName');
         window.location.href = 'index.html';
     }
 
@@ -433,8 +695,53 @@ document.addEventListener('DOMContentLoaded', async function() {
     nextWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); await renderCalendar(); });
     closeModalBtn.addEventListener('click', () => bookingModal.style.display = 'none');
     window.addEventListener('click', (event) => { if (event.target == bookingModal) bookingModal.style.display = 'none'; });
-    bookingForm.addEventListener('submit', async (e) => { e.preventDefault(); await (bookingForm.dataset.bookingId ? updateBooking(bookingForm.dataset.bookingId) : createBooking()); });
+    bookingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const inicioValue = document.getElementById('modal-inicio').value;
+        const fimValue = document.getElementById('modal-fim').value;
+        const now = new Date();
+        const startDate = new Date(inicioValue);
+        const endDate = new Date(fimValue);
+
+        // Block creation of bookings in the past (editing is already blocked by disabled fields)
+        if (startDate < now && !bookingForm.dataset.bookingId) {
+            showAlert('Não é possível criar agendamentos para datas ou horários passados.');
+            return;
+        }
+
+        // Verifica se o horário de término é posterior ao de início
+        if (endDate <= startDate) {
+            showAlert('O horário de término deve ser posterior ao horário de início.');
+            return;
+        }
+
+        await (bookingForm.dataset.bookingId ? updateBooking(bookingForm.dataset.bookingId) : createBooking());
+    });
     deleteBookingBtn.addEventListener('click', () => { if (bookingForm.dataset.bookingId) deleteBooking(bookingForm.dataset.bookingId); });
+    myBookingsBtn.addEventListener('click', openMyBookingsModal);
+
+    // New event listeners for user search modal
+    changeOwnerBtn.addEventListener('click', openUserSearchModal);
+    userSearchButton.addEventListener('click', async () => {
+        const query = userSearchQuery.value;
+        const searchBy = searchByMatriculaRadio.checked ? 'matricula' : 'name';
+        if (query) {
+            const users = await fetchUsersSearch(query, searchBy);
+            renderUserSearchResults(users);
+        } else {
+            userSearchResults.innerHTML = '<p>Digite algo para pesquisar.</p>';
+        }
+    });
+    userSearchResults.addEventListener('click', (e) => {
+        if (e.target.classList.contains('select-user-btn')) {
+            const userId = parseInt(e.target.dataset.userId);
+            const userName = e.target.dataset.userName;
+            selectUserFromSearch(userId, userName);
+        }
+    });
+    userSearchModal.querySelector('.close-btn').addEventListener('click', () => userSearchModal.style.display = 'none');
+    window.addEventListener('click', (event) => { if (event.target == userSearchModal) userSearchModal.style.display = 'none'; });
     
     if (localStorage.getItem('userProfile') === 'Administrador') {
         manageRoomsBtn.style.display = 'block';
@@ -465,7 +772,5 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // --- Carga Inicial ---
     await fetchRooms();
-    if (currentRoomId) {
-        await renderCalendar();
-    }
+    await renderCalendar();
 });

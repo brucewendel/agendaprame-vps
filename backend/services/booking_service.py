@@ -159,14 +159,16 @@ def get_bookings(start_date=None, end_date=None):
         
         sql_query = """
             SELECT
-                ID_AGENDAMENTO, ID_SALA, ID_USUARIO, 
-                TO_CHAR(DATA_INICIO, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_INICIO, 
-                TO_CHAR(DATA_FIM, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_FIM, 
-                TITULO
-            FROM MX2_AGENDAMENTOS_SALA
-            WHERE (:start_date IS NULL OR DATA_FIM > TO_TIMESTAMP(:start_date, 'YYYY-MM-DD"T"HH24:MI:SS'))
-            AND (:end_date IS NULL OR DATA_INICIO < TO_TIMESTAMP(:end_date, 'YYYY-MM-DD"T"HH24:MI:SS'))
-            ORDER BY DATA_INICIO ASC
+                a.ID_AGENDAMENTO, a.ID_SALA, a.ID_USUARIO, 
+                TO_CHAR(a.DATA_INICIO, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_INICIO, 
+                TO_CHAR(a.DATA_FIM, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_FIM, 
+                a.TITULO,
+                u.nome AS NOME_USUARIO
+            FROM MX2_AGENDAMENTOS_SALA a
+            LEFT JOIN pcempr u ON a.ID_USUARIO = u.matricula
+            WHERE (:start_date IS NULL OR a.DATA_FIM > TO_TIMESTAMP(:start_date, 'YYYY-MM-DD"T"HH24:MI:SS'))
+            AND (:end_date IS NULL OR a.DATA_INICIO < TO_TIMESTAMP(:end_date, 'YYYY-MM-DD"T"HH24:MI:SS'))
+            ORDER BY a.DATA_INICIO ASC
         """
         
         cursor.execute(sql_query, start_date=start_date, end_date=end_date)
@@ -265,23 +267,32 @@ def update_booking(booking_id, data, user_id, user_profile):
             db_manager.connection.rollback()
             return None, "Conflito de horário! A sala já está agendada neste novo período."
 
-        sql_update_booking = """
-            UPDATE MX2_AGENDAMENTOS_SALA
-            SET
-                ID_SALA = :sala_id,
-                DATA_INICIO = TO_TIMESTAMP(:inicio, 'YYYY-MM-DD"T"HH24:MI:SS'),
-                DATA_FIM = TO_TIMESTAMP(:fim, 'YYYY-MM-DD"T"HH24:MI:SS'),
-                TITULO = :titulo,
-                DESCRICAO = :descricao
-            WHERE ID_AGENDAMENTO = :booking_id
+        # --- Montagem dinâmica do UPDATE ---
+        params = {
+            'booking_id': booking_id,
+            'sala_id': sala_id,
+            'inicio': inicio,
+            'fim': fim,
+            'titulo': data.get('titulo'),
+            'descricao': data.get('descricao')
+        }
+
+        set_clause = """
+            ID_SALA = :sala_id,
+            DATA_INICIO = TO_TIMESTAMP(:inicio, 'YYYY-MM-DD"T"HH24:MI:SS'),
+            DATA_FIM = TO_TIMESTAMP(:fim, 'YYYY-MM-DD"T"HH24:MI:SS'),
+            TITULO = :titulo,
+            DESCRICAO = :descricao
         """
-        cursor.execute(sql_update_booking,
-                       booking_id=booking_id,
-                       sala_id=sala_id,
-                       inicio=inicio,
-                       fim=fim,
-                       titulo=data.get('titulo'),
-                       descricao=data.get('descricao'))
+
+        # Adiciona a atualização de usuário se o perfil for Administrador e o ID for fornecido
+        if user_profile == 'Administrador' and 'id_usuario' in data:
+            set_clause += ", ID_USUARIO = :id_usuario"
+            params['id_usuario'] = data['id_usuario']
+
+        sql_update_booking = f"UPDATE MX2_AGENDAMENTOS_SALA SET {set_clause} WHERE ID_AGENDAMENTO = :booking_id"
+
+        cursor.execute(sql_update_booking, params)
 
         db_manager.connection.commit()
         
@@ -366,12 +377,14 @@ def get_agendamento(id_agendamento):
         
         sql_query = """
             SELECT
-                ID_AGENDAMENTO, ID_SALA, ID_USUARIO, 
-                TO_CHAR(DATA_INICIO, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_INICIO, 
-                TO_CHAR(DATA_FIM, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_FIM, 
-                TITULO, DESCRICAO
-            FROM MX2_AGENDAMENTOS_SALA
-            WHERE ID_AGENDamento = :id_agendamento
+                a.ID_AGENDAMENTO, a.ID_SALA, a.ID_USUARIO, 
+                TO_CHAR(a.DATA_INICIO, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_INICIO, 
+                TO_CHAR(a.DATA_FIM, 'YYYY-MM-DD"T"HH24:MI:SS') AS DATA_FIM, 
+                a.TITULO, a.DESCRICAO,
+                u.nome AS NOME_USUARIO
+            FROM MX2_AGENDAMENTOS_SALA a
+            LEFT JOIN pcempr u ON a.ID_USUARIO = u.matricula
+            WHERE a.ID_AGENDamento = :id_agendamento
         """
         
         cursor.execute(sql_query, id_agendamento=id_agendamento)

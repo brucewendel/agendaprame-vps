@@ -338,14 +338,12 @@ body {
 
 /* --- Modal --- */
 .modal {
-    display: none;
+    display: none; /* Controlled by JS */
     position: fixed;
     z-index: 9999;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0; /* Covers the entire viewport */
     background: rgba(24,31,54,0.85);
+    /* Removed display: flex here. It will be added by JS when shown. */
     align-items: center;
     justify-content: center;
 }
@@ -354,15 +352,18 @@ body {
     background: var(--card-dark);
     color: var(--text-dark);
     border-radius: var(--border-radius);
-    padding: 2rem 2rem;
+    padding: 2rem;
+    padding-bottom: 3rem; /* Increased padding at the bottom */
     min-width: 380px;
-    max-width: 480px;
+    max-width: 700px; /* Increased width for filters and better button layout */
     box-shadow: var(--shadow);
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    margin: 0 auto;
+    margin: auto; /* Use auto for both vertical and horizontal centering within flex container */
+    max-height: 90vh; /* Limit height to 90% of viewport height */
+    overflow-y: auto; /* Allow content to scroll if it overflows */
 }
 
 .close-btn {
@@ -442,6 +443,34 @@ textarea {
     margin-right: 0.4rem;
 }
 
+/* Styles for the two-column form layout */
+.form-columns-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 1.5rem; /* Spacing between columns and rows */
+    margin-bottom: 1.5rem; /* Space below the columns before the buttons */
+}
+
+/* Ensure input groups within columns stack vertically */
+.form-column-left .input-group,
+.form-column-right .input-group,
+.form-column-right .equipment-options {
+    margin-bottom: 1.2rem; /* Maintain consistent spacing between form elements */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .form-columns-container {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+        gap: 0; /* Remove gap when in single column */
+    }
+    .form-column-left .input-group,
+    .form-column-right .input-group,
+    .form-column-right .equipment-options {
+        margin-bottom: 1.2rem; /* Ensure vertical spacing is maintained */
+    }
+}
+
 /* Botão enviar estilizado */
 .primary-button {
     background: var(--primary-color);
@@ -456,6 +485,7 @@ textarea {
     transition: background 0.2s, box-shadow 0.2s;
     margin-top: 0.5rem;
     letter-spacing: 0.5px;
+    width: fit-content; /* Allow button to shrink to content width */
 }
 
 .primary-button:hover,
@@ -463,6 +493,24 @@ textarea {
     background: #0056b3;
     box-shadow: 0 4px 16px rgba(0,123,255,0.18);
     outline: none;
+}
+
+.secondary-button {
+    background: var(--success-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.9rem 2rem;
+    font-weight: bold;
+    font-size: 1.08rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+    width: auto; /* Changed from 100% to auto */
+}
+
+.secondary-button:hover {
+    background: #218838;
 }
 
 /* Botão excluir no padrão visual */
@@ -492,9 +540,10 @@ textarea {
 .modal-actions {
     display: flex;
     gap: 1rem;
-    margin-top: 1.5rem;
+    margin-top: 1.5rem; /* Adjusted from 2rem, as gap in form-columns-container provides some vertical spacing */
     justify-content: center;
     align-items: center;
+    padding-bottom: 1rem; /* Add padding to the bottom of the modal-actions container */
 }
 
 /* --- Footer --- */
@@ -672,6 +721,134 @@ textarea {
 #manage-rooms-btn {
     margin-top: 1rem;
     width: 100%;
+}
+
+#my-bookings-btn {
+    width: 100%;
+    margin-top: 1rem; /* Align with manage-rooms-btn */
+}
+
+
+#my-bookings-list {
+    max-height: calc(90vh - 150px); /* Adjust this value based on actual header/footer/padding */
+    overflow-y: auto;
+    padding-right: 10px; /* To prevent scrollbar from overlapping content */
+    margin-bottom: 1rem; /* Add some space below the list */
+}
+
+#my-bookings-list .booking-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--light-border-color);
+}
+
+#my-bookings-list .booking-item:last-child {
+    border-bottom: none;
+}
+
+#my-bookings-list .booking-item h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-color);
+}
+
+#my-bookings-list .booking-item p {
+    margin: 0.2rem 0;
+    font-size: 0.95rem;
+}
+
+#my-bookings-modal .modal-content {
+    max-width: 900px; /* Increased width for filters */
+}
+
+#my-bookings-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#room-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#date-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#date-filter label {
+    margin-bottom: 0; /* Override default input-group label margin */
+    font-weight: 500;
+}
+
+#date-filter input[type="date"] {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--light-border-color);
+    background: #22305a;
+    color: #fff;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    width: auto; /* Allow input to size naturally */
+}
+
+.room-filter-btn {
+    background: var(--card-dark);
+    color: var(--text-dark);
+    border: 1px solid var(--light-border-color);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    font-size: 0.9rem;
+}
+
+.room-filter-btn:hover {
+    background: #2c3556;
+    border-color: var(--primary-color);
+}
+
+.room-filter-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.user-search-results {
+    margin-top: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--light-border-color);
+    border-radius: 4px;
+}
+
+.user-search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--light-border-color);
+}
+
+.user-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.user-search-result-item span {
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.user-search-result-item button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    margin-top: 0;
+    width: auto;
 }
 
 @media (max-width: 768px) {

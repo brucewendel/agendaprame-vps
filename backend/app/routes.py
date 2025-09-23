@@ -24,6 +24,30 @@ def login():
         "name": auth_data['name']
     }), 200
 
+@main.route('/users', methods=['GET'])
+@jwt_required
+@admin_required
+def get_users():
+    users, error = auth_service.get_all_users()
+    if error:
+        return jsonify({"message": error}), 500
+    return jsonify(users), 200
+
+@main.route('/users/search', methods=['GET'])
+@jwt_required
+@admin_required
+def search_users_route():
+    query = request.args.get('query')
+    search_by = request.args.get('search_by')
+
+    if not query or not search_by:
+        return jsonify({"message": "Parâmetros de busca 'query' e 'search_by' são obrigatórios."}), 400
+
+    users, error = auth_service.search_users(query, search_by)
+    if error:
+        return jsonify({"message": error}), 500
+    return jsonify(users), 200
+
 # --- Rotas de Salas (CRUD - Admin) ---
 @main.route('/rooms', methods=['POST'])
 @jwt_required

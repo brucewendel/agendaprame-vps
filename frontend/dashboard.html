@@ -26,6 +26,7 @@
                 <!-- As abas de sala e botões de adicionar/editar/excluir serão inseridos pelo JS -->
             </div>
             <button id="manage-rooms-btn" class="primary-button">Gerenciar Salas</button>
+            <button id="my-bookings-btn" class="secondary-button">Meus Agendamentos</button>
         </aside>
 
         <section class="main-content-area">
@@ -50,39 +51,56 @@
             <span class="close-btn">&times;</span>
             <h3>Detalhes do Agendamento</h3>
             <form id="booking-form">
-                <div class="input-group">
-                    <label for="modal-titulo">Título da Reunião</label>
-                    <input type="text" id="modal-titulo" required>
-                </div>
-                <div class="input-group">
-                    <label for="modal-sala">Sala</label>
-                    <input type="text" id="modal-sala" disabled>
-                </div>
-                <div class="input-group">
-                    <label for="modal-inicio">Início</label>
-                    <input type="datetime-local" id="modal-inicio" required>
-                </div>
-                <div class="input-group">
-                    <label for="modal-fim">Término</label>
-                    <input type="datetime-local" id="modal-fim" required>
-                </div>
-                <div class="input-group">
-                    <label for="modal-descricao">Descrição (opcional)</label>
-                    <textarea id="modal-descricao"></textarea>
-                </div>
-                <div class="equipment-options">
-                    <p>Equipamentos:</p>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="modal-projetor">
-                        <label for="modal-projetor">Projetor</label>
+                <div class="form-columns-container">
+                    <div class="form-column-left">
+                        <div class="input-group">
+                            <label for="modal-titulo">Título da Reunião</label>
+                            <input type="text" id="modal-titulo" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="modal-owner-display">Agendado por</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span id="modal-owner-display" class="form-control" style="flex-grow: 1; padding: 0.6rem; border-radius: 4px; border: 1px solid #2c3556; background: #22305a; color: #fff; font-size: 1rem;"></span>
+                                <button type="button" id="change-owner-btn" class="secondary-button" style="width: auto; margin-top: 0;">Alterar</button>
+                                <input type="hidden" id="modal-owner-id">
+                            </div>
+                        </div>
+                        <div class="datetime-group">
+                            <div class="input-group">
+                                <label for="modal-inicio">Início</label>
+                                <input type="datetime-local" id="modal-inicio" required>
+                            </div>
+                            <span class="datetime-separator"></span>
+                            <div class="input-group">
+                                <label for="modal-fim">Término</label>
+                                <input type="datetime-local" id="modal-fim" required>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="modal-descricao">Descrição (opcional)</label>
+                            <textarea id="modal-descricao"></textarea>
+                        </div>
                     </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="modal-regua-energia">
-                        <label for="modal-regua-energia">Régua de Energia</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="modal-suporte-ti">
-                        <label for="modal-suporte-ti">Suporte de TI</label>
+                    <div class="form-column-right">
+                        <div class="input-group">
+                            <label for="modal-sala">Sala</label>
+                            <input type="text" id="modal-sala" disabled>
+                        </div>
+                        <div class="equipment-options">
+                            <p>Equipamentos:</p>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="modal-projetor">
+                                <label for="modal-projetor">Projetor</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="modal-regua-energia">
+                                <label for="modal-regua-energia">Régua de Energia</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="modal-suporte-ti">
+                                <label for="modal-suporte-ti">Suporte de TI</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-actions">
@@ -119,6 +137,35 @@
                     <button type="submit" class="primary-button">Salvar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Meus Agendamentos -->
+    <div id="my-bookings-modal" class="modal" style="display:none;">
+        <div class="modal-content card">
+            <span class="close-btn" onclick="document.getElementById('my-bookings-modal').style.display='none'">&times;</span>
+            <h3 id="my-bookings-title">Meus Agendamentos</h3>
+            <div id="my-bookings-list"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Busca de Usuários -->
+    <div id="user-search-modal" class="modal" style="display:none;">
+        <div class="modal-content card">
+            <span class="close-btn" onclick="document.getElementById('user-search-modal').style.display='none'">&times;</span>
+            <h3>Buscar Usuário</h3>
+            <div class="input-group">
+                <label for="user-search-query">Pesquisar por</label>
+                <input type="text" id="user-search-query" placeholder="Matrícula ou Nome">
+            </div>
+            <div class="input-group">
+                <input type="radio" id="search-by-matricula" name="search-type" value="matricula" checked>
+                <label for="search-by-matricula">Matrícula</label>
+                <input type="radio" id="search-by-name" name="search-type" value="name">
+                <label for="search-by-name">Nome</label>
+            </div>
+            <button id="user-search-button" class="primary-button">Buscar</button>
+            <div id="user-search-results" class="user-search-results"></div>
         </div>
     </div>
 

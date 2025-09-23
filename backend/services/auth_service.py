@@ -55,3 +55,87 @@ def authenticate_user(login, senha_fornecida):
         }, None
     except Exception as e:
         return None, f"Erro ao gerar o token: {str(e)}"
+
+def get_all_users():
+    """
+    Retorna uma lista de todos os usuários ativos.
+    """
+    conn = db_manager.connect()
+    if not conn:
+        return [], "Erro de conexão com o banco de dados."
+
+    try:
+        cursor = db_manager.connection.cursor()
+        
+        sql_query = """
+            SELECT
+                t.matricula,
+                t.nome
+            FROM pcempr t
+            WHERE t.situacao = 'A' AND t.dt_exclusao IS NULL AND t.dtdemissao IS NULL
+            ORDER BY t.nome ASC
+        """
+        
+        cursor.execute(sql_query)
+        users = cursor.fetchall()
+
+        # Renomeia as colunas para um formato mais amigável para o frontend
+        column_names = ['id', 'name'] 
+        users_list = [dict(zip(column_names, user)) for user in users]
+
+        return users_list, None
+
+    except cx_Oracle.DatabaseError as e:
+        error, = e.args
+        return [], f"Erro ao buscar usuários: {error.message}"
+    
+    finally:
+        if conn:
+            db_manager.connection.close()
+
+def search_users(query, search_by):
+    """
+    Busca usuários ativos por matrícula ou nome.
+    """
+    conn = db_manager.connect()
+    if not conn:
+        return [], "Erro de conexão com o banco de dados."
+
+    try:
+        cursor = db_manager.connection.cursor()
+        
+        sql_query = """
+            SELECT
+                t.matricula,
+                t.nome
+            FROM pcempr t
+            WHERE t.situacao = 'A' AND t.dt_exclusao IS NULL AND t.dtdemissao IS NULL
+        """
+        params = {}
+
+        if search_by == 'matricula':
+            sql_query += " AND t.matricula = :query"
+            params['query'] = query
+        elif search_by == 'name':
+            sql_query += " AND UPPER(t.nome) LIKE UPPER(:query)"
+            params['query'] = f"%{query}%"
+        else:
+            return [], "Tipo de busca inválido. Use 'matricula' ou 'name'."
+        
+        sql_query += " ORDER BY t.nome ASC"
+
+        cursor.execute(sql_query, params)
+        users = cursor.fetchall()
+
+        column_names = ['id', 'name'] 
+        users_list = [dict(zip(column_names, user)) for user in users]
+
+        return users_list, None
+
+    except cx_Oracle.DatabaseError as e:
+        error, = e.args
+        return [], f"Erro ao buscar usuários: {error.message}"
+    
+    finally:
+        if conn:
+            db_manager.connection.close()
