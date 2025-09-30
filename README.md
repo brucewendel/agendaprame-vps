@@ -1,123 +1,225 @@
-# Guia de Deploy: Docker + Nginx Nativo na VPS
+# Guia de Deploy Definitivo: Aplicação de Agendamento
 
-Este guia mostra como fazer o deploy da aplicação usando Docker e um Nginx já instalado na sua VPS.
-
----
-
-### Pré-requisitos
-
-1.  **VPS Pronta**: Ubuntu 22.04 com **Docker**, **Docker Compose** e **Nginx** já instalados.
-2.  **Domínio Configurado**: Seu domínio (`agendapra.me`) apontando para o IP da sua VPS.
-3.  **Código Frontend Atualizado**: O JS do frontend deve fazer chamadas de API para o caminho relativo `/api/`.
+Este documento é o guia completo e passo a passo para fazer o deploy desta aplicação em um servidor de produção (VPS). Seguindo estas instruções, a aplicação será executada de forma segura e isolada usando Docker, com Nginx atuando como proxy reverso e Certbot para segurança SSL (HTTPS).
 
 ---
 
-### Passo 1: Instale o Certbot na VPS
+### **Arquitetura Final**
 
-Se ainda não o tiver, instale o Certbot e seu plugin para Nginx. Ele irá automatizar a configuração de HTTPS.
+*   **VPS (Host)**: Executa o Nginx nativamente, que gerencia todo o tráfego web.
+*   **Docker**: Executa a aplicação (backend e frontend) em contêineres isolados.
+*   **Nginx**: Atua como a porta de entrada. Ele recebe as requisições em `https://agendapra.me`, direciona o tráfego da API (`/api/`) para o contêiner do backend e todo o resto para o contêiner do frontend.
+*   **Certbot**: Ferramenta que automatiza a geração e renovação dos certificados SSL/TLS.
+
+---
+
+### **Parte 1: Pré-requisitos**
+
+Antes de começar, garanta que você tenha:
+
+1.  **Uma VPS limpa**: Recomendo **Ubuntu 22.04 LTS**.
+2.  **Acesso `root` ou um usuário com privilégios `sudo`**.
+3.  **Um domínio registrado** (ex: `agendapra.me`) com o DNS já apontado para o endereço de IP da sua VPS.
+
+---
+
+### **Parte 2: Preparação do Servidor VPS**
+
+Estes comandos preparam uma VPS do zero, instalando tudo o que é necessário.
 
 ```bash
-sudo apt update
-sudo apt install certbot python3-certbot-nginx -y
+# 1. Atualize o sistema
+sudo apt-get update && sudo apt-get upgrade -y
+
+# 2. Instale o Nginx
+sudo apt-get install nginx -y
+
+# 3. Configure o Firewall (UFW)
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full' # Permite as portas 80 (HTTP) e 443 (HTTPS)
+sudo ufw enable # Pressione 'y' para confirmar
+
+# 4. Instale o Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER # Permite executar docker sem sudo (requer novo login para aplicar)
+
+# 5. Instale o Docker Compose
+sudo apt-get install docker-compose-plugin -y
+
+# 6. Instale o Certbot e seu plugin para Nginx
+sudo apt-get install certbot python3-certbot-nginx -y
 ```
+**Ação**: Após executar os comandos acima, **saia e entre novamente na sua sessão SSH** para que a permissão do Docker seja aplicada ao seu usuário.
 
-### Passo 2: Suba os Contêineres da Aplicação
+---
 
-1.  Acesse sua VPS e clone o projeto:
+### **Parte 3: Deploy da Aplicação**
+
+Agora que o servidor está pronto, vamos subir a aplicação.
+
+1.  **Clone o Repositório do Projeto**
     ```bash
-    cd /opt/apps # ou outra pasta de sua preferência
-    git clone <sua-url-do-git> agendamento_sala
-    cd agendamento_sala
+    # Crie uma pasta para suas aplicações (boa prática)
+    mkdir -p ~/apps
+    cd ~/apps
+
+    # Clone o projeto
+    git clone <URL_DO_SEU_REPOSITORIO_GIT> agendamento
+    cd agendamento
     ```
 
-2.  Crie e configure o arquivo `.env` do backend:
+2.  **Configure as Variáveis de Ambiente**
+    Este é um passo crítico. As credenciais do banco de dados ficam aqui.
     ```bash
-    cp backend/.env.example backend/.env
-    nano backend/.env
+    # Navegue para a pasta do backend
+    cd backend/
+
+    # Crie o arquivo .env a partir do exemplo
+    cp .env.example .env
+
+    # Edite o arquivo .env com suas credenciais REAIS de produção
+    nano .env
+    ```
+    **Atenção**: Verifique se os nomes das variáveis no arquivo `.env` correspondem exatamente aos nomes usados no seu código Python para carregar as configurações.
+
+3.  **Inicie os Contêineres da Aplicação**
+    Este comando irá construir as imagens do `frontend` e `backend` e iniciar os contêineres.
+    ```bash
+    # Volte para a raiz do projeto
+    cd ..
+
+    # Suba os contêineres em segundo plano
+    docker-compose up -d --build
+    ```
+    *Neste ponto, sua aplicação está rodando, mas ainda não é acessível publicamente.*
+
+---
+
+### **Parte 4: Configuração do Nginx e Ativação do SSL**
+
+Vamos configurar o Nginx da VPS para ele saber como encontrar e servir sua aplicação.
+
+1.  **Desative o Site Padrão do Nginx**
+    Para evitar conflitos, é uma boa prática desativar a página de boas-vindas do Nginx.
+    ```bash
+    sudo rm /etc/nginx/sites-enabled/default
     ```
 
-3.  Inicie os contêineres do backend e frontend com Docker Compose:
+2.  **Crie o Arquivo de Configuração da Sua Aplicação**
+    Este arquivo unifica as rotas para o frontend, backend e o webhook GLPI.
     ```bash
-    sudo docker-compose up -d --build
-    ```
-    *Seus serviços estarão rodando nas portas `8001` (backend) e `8002` (frontend) da sua VPS, acessíveis apenas localmente.*
-
-### Passo 3: Configure o Nginx e Gere o Certificado SSL
-
-1.  **Crie o arquivo de configuração inicial do Nginx** na sua VPS:
-    ```bash
+    # Crie e abra o novo arquivo de configuração
     sudo nano /etc/nginx/sites-available/agendamento.conf
     ```
-    - Cole o seguinte conteúdo dentro dele:
+    - **Copie e cole** o conteúdo abaixo dentro do arquivo. **Lembre-se de substituir `agendapra.me` pelo seu domínio real.**
+
       ```nginx
       server {
           listen 80;
           server_name agendapra.me;
+
+          location /.well-known/acme-challenge/ {
+              root /var/www/html;
+          }
+          location / {
+              return 301 https://$host$request_uri;
+          }
       }
       ```
 
-2.  **Ative o site** criando um link simbólico:
+3.  **Ative a Nova Configuração**
     ```bash
     sudo ln -s /etc/nginx/sites-available/agendamento.conf /etc/nginx/sites-enabled/
     ```
 
-3.  **Teste a configuração do Nginx**:
+4.  **Gere o Certificado SSL com Certbot**
+    O Certbot irá detectar sua configuração, gerar o certificado e atualizar o arquivo `agendamento.conf` para HTTPS automaticamente.
     ```bash
-    sudo nginx -t
-    ```
-    *Se aparecer "syntax is ok" e "test is successful", você está pronto.*
-
-4.  **Execute o Certbot**: Ele irá ler sua configuração, gerar o certificado HTTPS e modificar o arquivo `agendamento.conf` automaticamente.
-    ```bash
+    # Substitua com seu domínio e email
     sudo certbot --nginx -d agendapra.me --email seu-email@exemplo.com --agree-tos --no-eff-email
     ```
-    *Siga as instruções. Quando perguntar sobre redirecionar HTTP para HTTPS, escolha a opção de redirecionar (geralmente a opção 2).*
+    - Siga as instruções na tela. Quando perguntado sobre redirecionar HTTP para HTTPS, escolha a opção de **redirecionar**.
 
-### Passo 4: Finalize a Configuração do Nginx (Proxy Reverso)
-
-1.  O Certbot já criou a configuração HTTPS. Agora, **edite o arquivo final** para adicionar o redirecionamento para seus contêineres Docker.
+5.  **Adicione o Proxy Reverso ao Arquivo Final**
+    O Certbot preparou o arquivo para HTTPS, agora vamos adicionar a lógica de redirecionamento para os contêineres Docker.
     ```bash
     sudo nano /etc/nginx/sites-available/agendamento.conf
     ```
+    - O arquivo já terá um conteúdo criado pelo Certbot. **Substitua todo o conteúdo** pela versão final abaixo, que inclui os `proxy_pass`.
 
-2.  **Adicione os blocos `location`** dentro do `server` que escuta na porta `443 ssl`. O arquivo final deve ficar parecido com isto:
+      ```nginx
+      server {
+          listen 80;
+          server_name agendapra.me;
+          location / { return 301 https://$host$request_uri; }
+      }
 
-    ```nginx
-    server {
-        server_name agendapra.me;
+      server {
+          listen 443 ssl http2;
+          server_name agendapra.me;
 
-        # Bloco para o Frontend (adicionar esta location)
-        location / {
-            proxy_pass http://127.0.0.1:8002; # Aponta para o container frontend
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+          # Configurações SSL (gerenciadas pelo Certbot)
+          ssl_certificate /etc/letsencrypt/live/agendapra.me/fullchain.pem;
+          ssl_certificate_key /etc/letsencrypt/live/agendapra.me/privkey.pem;
+          include /etc/letsencrypt/options-ssl-nginx.conf;
+          ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
-        # Bloco para o Backend (adicionar esta location)
-        location /api/ {
-            rewrite ^/api/(.*)$ /$1 break;
-            proxy_pass http://127.0.0.1:8001; # Aponta para o container backend
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+          # Proxy para o Frontend
+          location / {
+              proxy_pass http://127.0.0.1:8002;
+              proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme;
+          }
 
-        # O Certbot terá adicionado as linhas abaixo automaticamente
-        listen 443 ssl; # managed by Certbot
-        ssl_certificate /etc/letsencrypt/live/agendapra.me/fullchain.pem; # managed by Certbot
-        ssl_certificate_key /etc/letsencrypt/live/agendapra.me/privkey.pem; # managed by Certbot
-        include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    }
-    ```
+          # Proxy para o Backend
+          location /api/ {
+              rewrite ^/api/(.*)$ /$1 break;
+              proxy_pass http://127.0.0.1:8001;
+              proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme;
+          }
 
-3.  **Teste e recarregue o Nginx** pela última vez:
+          # Proxy para o Webhook GLPI
+          location /webhook/glpi {
+              rewrite ^/webhook/glpi(.*)$ $1 break;
+              proxy_pass http://127.0.0.1:55200;
+              proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme;
+          }
+      }
+      ```
+
+6.  **Teste e Recarregue o Nginx**
     ```bash
     sudo nginx -t
+    # Se o teste for bem-sucedido:
     sudo systemctl reload nginx
     ```
 
-**Pronto!** Sua aplicação está no ar, com o Nginx da sua VPS gerenciando todo o tráfego e o SSL, e sua aplicação rodando de forma isolada em contêineres Docker.
+**DEPLOY CONCLUÍDO!** Sua aplicação está no ar, segura e pronta para uso em `https://agendapra.me`.
+
+---
+
+### **Parte 5: Manutenção e Atualizações**
+
+*   **Verificar Logs da Aplicação**:
+    ```bash
+    # Ver logs do backend
+    docker-compose logs -f backend
+
+    # Ver logs do frontend
+    docker-compose logs -f frontend
+    ```
+
+*   **Atualizar a Aplicação**:
+    Depois de enviar novas alterações para o seu repositório Git:
+    ```bash
+    # Na pasta do projeto na VPS
+    git pull
+
+    # Reconstrua as imagens e reinicie os contêineres
+    docker-compose up -d --build
+    ```
+
+*   **Renovação do SSL**: O Certbot configura uma renovação automática. Você pode testar o processo com:
+    ```bash
+    sudo certbot renew --dry-run
+    ```
