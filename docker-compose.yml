@@ -1,61 +1,31 @@
 version: '3.8'
 
+# Este docker-compose sobe APENAS os serviços da aplicação.
+# O Nginx e o Certbot serão gerenciados nativamente na VPS.
+
 services:
-  # Serviço do Backend (API)
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     container_name: agendamento_backend
     restart: unless-stopped
-    env_file:
-      - ./backend/.env # Carrega variáveis de ambiente do backend
+    env_file: ./backend/.env
+    ports:
+      # Expõe a porta 8000 do container para a porta 8001 do host (VPS)
+      # Apenas o host pode acessar, o firewall bloqueia o acesso externo.
+      - "127.0.0.1:8001:8000"
     networks:
       - app_network
-    # Não expomos portas para o mundo exterior, apenas para o Nginx
 
-  # Serviço do Frontend
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
     container_name: agendamento_frontend
     restart: unless-stopped
-    networks:
-      - app_network
-
-  # Serviço do Nginx (Reverse Proxy)
-  nginx:
-    image: nginx:stable-alpine
-    container_name: nginx_proxy
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro # Monta configurações dos sites (read-only)
-      - certbot_conf:/etc/letsencrypt # Volume para certificados SSL
-      - certbot_www:/var/www/certbot # Volume para o desafio do Certbot
+      # Expõe a porta 80 do container para a porta 8002 do host (VPS)
+      - "127.0.0.1:8002:80"
     networks:
       - app_network
-    depends_on:
-      - backend
-      - frontend
-
-  # Serviço do Certbot para SSL
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    # O comando será executado manualmente ou via cron job
-    command: ["renew"]
 
 networks:
   app_network:
     driver: bridge
-
-volumes:
-  certbot_conf:
-  certbot_www:
