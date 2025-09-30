@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Funções da API ---
     async function fetchRooms() {
         try {
-            const response = await fetch('http://127.0.0.1:5000/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 rooms = await response.json();
                 if (rooms.length > 0 && currentRoomId === null) {
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function fetchUsers() {
         try {
-            const response = await fetch('http://127.0.0.1:5000/users', { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function fetchUsersSearch(query, searchBy) {
         try {
-            const response = await fetch(`http://127.0.0.1:5000/users/search?query=${query}&search_by=${searchBy}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/users/search?query=${query}&search_by=${searchBy}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const endIso = toApiFormat(endDate);
 
         try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar agendamentos.'), []);
         } catch (error) {
             showAlert('Erro de conexão ao buscar agendamentos.');
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const endIso = toApiFormat(endDate);
 
         try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar seus agendamentos.'), []);
         } catch (error) {
             showAlert('Erro de conexão ao buscar seus agendamentos.');
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function createBooking() {
         const payload = buildBookingPayload();
         try {
-            const response = await fetch('http://127.0.0.1:5000/agendamentos', {
+            const response = await fetch('/api/agendamentos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function updateBooking(bookingId) {
         const payload = buildBookingPayload();
         try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, {
+            const response = await fetch(`/api/agendamentos/${bookingId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function deleteBooking(bookingId) {
         try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/agendamentos/${bookingId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             const data = await response.json();
             if (response.ok) {
                 bookingModal.style.display = 'none';
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const name = prompt('Nome da nova sala:');
         if (!name) return;
         try {
-            const response = await fetch('http://127.0.0.1:5000/rooms', {
+            const response = await fetch('/api/rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name })
@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const roomId = parseInt(editRoomId.value);
         const newName = editRoomName.value;
         try {
-            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
+            const response = await fetch(`/api/rooms/${roomId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name: newName })
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function deleteRoom(roomId) {
         if (!confirm('Deseja realmente excluir esta sala? Isso removerá todos os seus agendamentos.')) return;
         try {
-            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 if (currentRoomId === roomId) currentRoomId = rooms.find(r => r.active)?.id || null;
                 await fetchRooms();
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const room = rooms.find(r => r.id === roomId);
         if (!room) return;
         try {
-            const response = await fetch(`http://127.0.0.1:5000/rooms/${roomId}`, {
+            const response = await fetch(`/api/rooms/${roomId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ active: !room.active })
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function openBookingModalForEdit(bookingId) {
         try {
-            const response = await fetch(`http://127.0.0.1:5000/agendamentos/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/agendamentos/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Falha ao carregar dados do agendamento.');
             const booking = await response.json();
             
