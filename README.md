@@ -1,124 +1,126 @@
-# Agendamento de Salas
+# Guia de Deploy com Docker, Nginx e Certbot
 
-Sistema web para agendamento de salas de reunião, com frontend em HTML, CSS e JavaScript puro, e backend em Python com Flask.
+Este guia contém todos os passos e arquivos para fazer o deploy da sua aplicação full-stack em um ambiente de produção utilizando Docker e Nginx como proxy reverso.
 
-## Funcionalidades
-
-- **Autenticação de Usuários:** Sistema de login com perfis de Administrador e Usuário comum.
-- **CRUD de Salas:** Administradores podem criar, listar, atualizar e excluir salas.
-- **Ativação/Desativação de Salas:** Administradores podem ativar ou desativar salas para agendamento.
-- **Agendamento de Reuniões:** Usuários autenticados podem agendar reuniões nas salas disponíveis.
-- **Visualização de Agendamentos:** Interface de calendário para visualizar os agendamentos existentes.
-- **Cancelamento de Agendamentos:** Usuários podem cancelar seus próprios agendamentos (administradores podem cancelar qualquer um).
-
-## Tecnologias Utilizadas
-
-**Backend:**
-- **Python 3**
-- **Flask:** Micro-framework web.
-- **Flask-CORS:** Para lidar com requisições de origens diferentes (CORS).
-- **cx_Oracle:** Driver de conexão para o banco de dados Oracle.
-- **PyJWT:** Para geração e validação de tokens de autenticação JWT.
-
-**Frontend:**
-- **HTML5**
-- **CSS3**
-- **JavaScript (Vanilla JS)**
-- **FullCalendar:** Biblioteca para a exibição do calendário de agendamentos.
-
-## Pré-requisitos
-
-- **Python 3.9+**
-- **Oracle Instant Client:** Necessário para a comunicação com o banco de dados Oracle.
-- Um editor de código de sua preferência (ex: VS Code).
-
-## Instalação e Execução
-
-### 1. Backend
-
-**a. Clone o repositório:**
-```bash
-git clone https://github.com/brucewendel/AGENDAMENTO_SALAS.git
-cd AGENDAMENTO_SALAS/backend
-```
-
-**b. Crie e ative um ambiente virtual:**
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-**c. Instale as dependências:**
-```bash
-pip install -r requirements.txt
-```
-
-**d. Configure as variáveis de ambiente:**
-   - Crie um arquivo chamado `.env` na pasta `backend`.
-   - Adicione as seguintes variáveis com as suas credenciais do banco de dados Oracle:
-     ```
-     SECRET_KEY='uma-chave-secreta-bem-forte'
-     DB_USER='seu_usuario_oracle'
-     DB_PASSWORD='sua_senha_oracle'
-     HOST='seu_host_oracle'
-     PORT='sua_porta_oracle'
-     SERVICE_NAME='seu_service_name_oracle'
-     ```
-
-**e. Execute o servidor:**
-```bash
-python run.py
-```
-O servidor estará rodando em `http://127.0.0.1:5000`.
-
-### 2. Frontend
-
-O frontend é composto por arquivos estáticos (`.html`, `.css`, `.js`).
-
-Basta abrir o arquivo `frontend/index.html` diretamente no seu navegador de preferência.
-
-## Testes Automatizados
-
-O projeto inclui um script para testar os endpoints da API.
-
-**a. Configure o script de teste:**
-   - Abra o arquivo `backend/test_api.py`.
-   - **Importante:** Altere as credenciais de exemplo nas variáveis `ADMIN_CREDENTIALS` e `USER_CREDENTIALS` para um usuário administrador e um usuário comum válidos no seu sistema.
-
-**b. Execute os testes:**
-   - Com o servidor backend em execução, abra um novo terminal e rode o comando:
-     ```bash
-     python backend/test_api.py
-     ```
-   - O resultado de cada teste será exibido no console, com um resumo ao final.
+---
 
 ## Estrutura do Projeto
 
+Certifique-se de que seu projeto segue esta estrutura. Os arquivos `Dockerfile`, `docker-compose.yml`, etc., já foram criados para você.
+
 ```
-AGENDAMENTO_SALAS/
+/agendamento_sala/
 ├── backend/
-│   ├── app/                # Contém a lógica principal da aplicação Flask
-│   │   ├── __init__.py     # Fábrica de aplicação, inicializa o Flask e extensões
-│   │   ├── models.py       # Modelos de dados (ex: Sala, Agendamento)
-│   │   ├── routes.py       # Definição dos endpoints da API
-│   │   └── config.py       # Configurações da aplicação
-│   ├── services/           # Lógica de negócio (interação com o banco de dados)
-│   ├── utils/              # Módulos de utilidade (decoradores, conexão com BD)
-│   ├── venv/               # Ambiente virtual Python
-│   ├── .env                # Arquivo para variáveis de ambiente (NÃO versionar)
-│   ├── requirements.txt    # Lista de dependências Python
-│   ├── run.py              # Ponto de entrada para iniciar o servidor
-│   └── test_api.py         # Script de testes automatizados da API
-└── frontend/
-    ├── index.html          # Página de login
-    ├── dashboard.html      # Painel principal com o calendário e gestão de salas
-    ├── style.css           # Estilos para a página de login
-    ├── dashboard.css       # Estilos para o dashboard
-    ├── script.js           # Lógica do frontend para a página de login
-    └── dashboard.js        # Lógica do frontend para o dashboard
+│   ├── .env.example      # Exemplo de variáveis de ambiente
+│   ├── Dockerfile          # Dockerfile do Backend
+│   └── requirements.txt
+├── frontend/
+│   └── Dockerfile          # Dockerfile do Frontend
+├── nginx/
+│   └── conf.d/
+│       └── app.conf        # Configuração do Nginx para este projeto
+└── docker-compose.yml      # Arquivo principal de orquestração
 ```
+
+---
+
+## Passo a Passo do Deploy
+
+### 1. Preparação do Ambiente
+
+- **VPS**: Tenha uma VPS (Ubuntu 22.04 recomendado) com Docker e Docker Compose instalados.
+- **Firewall**: Configure o firewall para permitir tráfego nas portas 22 (SSH), 80 (HTTP) e 443 (HTTPS).
+- **DNS**: Aponte os domínios `meusite.com` e `api.meusite.com` para o IP da sua VPS.
+
+### 2. Configuração dos Arquivos
+
+1.  **Clone seu projeto para a VPS**:
+    ```bash
+    git clone <sua-url-do-git> agendamento_sala
+    cd agendamento_sala
+    ```
+
+2.  **Configure as Variáveis de Ambiente do Backend**:
+    - Crie um arquivo `.env` a partir do exemplo.
+      ```bash
+      cp backend/.env.example backend/.env
+      ```
+    - Edite o arquivo `backend/.env` com suas credenciais de produção (banco de dados, chaves secretas, etc.).
+      ```bash
+      nano backend/.env
+      ```
+
+3.  **Ajuste os Domínios no Nginx**:
+    - Edite o arquivo de configuração do Nginx para usar seus domínios reais.
+      ```bash
+      nano nginx/conf.d/app.conf
+      ```
+    - Substitua todas as ocorrências de `meusite.com` e `api.meusite.com` pelos seus domínios.
+
+### 3. Geração do Certificado SSL (Primeira Vez)
+
+1.  **Suba o Nginx temporariamente**:
+    - Inicie apenas o Nginx para que o Certbot possa validar seus domínios.
+      ```bash
+      docker-compose up -d nginx
+      ```
+
+2.  **Execute o Certbot**:
+    - Use o `docker-compose` para executar o Certbot. Ele usará os volumes compartilhados com o Nginx.
+      ```bash
+      docker-compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot --email seu-email@exemplo.com -d meusite.com -d api.meusite.com --agree-tos --no-eff-email
+      ```
+    - **Importante**: Substitua `seu-email@exemplo.com`, `meusite.com`, e `api.meusite.com`.
+
+3.  **Pare o Nginx temporário**:
+    ```bash
+    docker-compose down
+    ```
+
+### 4. Subindo a Aplicação Completa
+
+- Com os certificados SSL gerados e os arquivos de configuração prontos, suba todos os serviços:
+  ```bash
+  docker-compose up -d --build
+  ```
+
+- A flag `--build` força a reconstrução das suas imagens, o que é importante na primeira vez ou quando você altera o código-fonte ou `Dockerfile`.
+
+- Para verificar se tudo está rodando:
+  ```bash
+  docker-compose ps
+  ```
+
+Neste ponto, sua aplicação deve estar acessível em `https://meusite.com` e `https://api.meusite.com`.
+
+---
+
+## Gerenciamento e Manutenção
+
+- **Ver Logs**: Para depurar um serviço específico (ex: backend):
+  ```bash
+  docker-compose logs -f backend
+  ```
+
+- **Atualizar a Aplicação**: Após fazer alterações no seu código e dar `push` para o seu repositório:
+  ```bash
+  # Na sua VPS, dentro da pasta do projeto
+  git pull
+  docker-compose up -d --build # Reconstrói e reinicia apenas os serviços que mudaram
+  ```
+
+- **Renovação do SSL**: O Certbot é configurado para renovar automaticamente. Você pode testar o processo de renovação com:
+  ```bash
+  docker-compose run --rm certbot renew --dry-run
+  ```
+  Para automatizar de fato, adicione um cron job na sua VPS (`crontab -e`) para rodar o comando de renovação periodicamente:
+  ```cron
+  0 3 * * * /usr/bin/docker-compose -f /path/para/seu/projeto/docker-compose.yml run --rm certbot renew
+  ```
+
+## Adicionando um Novo Serviço no Futuro
+
+1.  **Adicione o serviço** ao `docker-compose.yml` (ex: `outro_servico`).
+2.  **Crie um novo arquivo de configuração** em `nginx/conf.d/outro_servico.conf` para o domínio `outro.meusite.com`, apontando para o `outro_servico`.
+3.  **Gere o certificado SSL** para o novo domínio como no Passo 3.
+4.  **Reinicie tudo** com `docker-compose up -d --build`.
