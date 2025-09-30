@@ -622,7 +622,7 @@ textarea {
 }
 
 .footer-col.company-info .footer-logo {
-    height: 40px;
+    height: 45px;
     margin-bottom: 1rem;
     filter: brightness(0) invert(1);
 }
@@ -981,4 +981,31 @@ textarea {
     font-size: 1rem;
     line-height: 1.5;
     margin-bottom: 20px;
+}
+
+
+
+.footer-logo-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem; /* Or adjust as needed */
+}
+
+.logo-text {
+    font-family: 'Poppins', 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    margin-left: 10px;
+    letter-spacing: 1px;
+}
+
+.logo-highlight {
+    background: -webkit-linear-gradient(top, #00BFFF, #00008B);
+    background: linear-gradient(to bottom, #00BFFF, #00008B);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
 }
