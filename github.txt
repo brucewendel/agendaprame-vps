@@ -9,7 +9,7 @@ cd /caminho/para/sua/pasta
 git init
 
 # 3. Adicione o repositório remoto (só se ainda não fez)
-git remote add origin https://github.com/brucewendel/AGENDAMENTO_SALAS
+git remote add origin https://github.com/brucewendel/agendaprame-vps
 
 # 4. Adicione os arquivos para commit
 git add .
