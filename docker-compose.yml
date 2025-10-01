@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend
+    container_name: agendamento-backend
+    restart: always
+    ports:
+      - "8001:5000"
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_ENV=production
+    networks:
+      - agendamento-network
+
+  frontend:
+    build: ./frontend
+    container_name: agendamento-frontend
+    restart: always
+    ports:
+      - "8002:80"
+    depends_on:
+      - backend
+    networks:
+      - agendamento-network
+
+networks:
+  agendamento-network:
+    driver: bridge
