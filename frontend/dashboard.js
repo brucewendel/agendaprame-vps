@@ -1,3 +1,7 @@
+// URL base para API - Altere entre as opções conforme o ambiente
+const baseUrl = 'http://127.0.0.1:5000';
+// const baseUrl = '/api'; // Use esta opção para produção/deploy
+
 document.addEventListener('DOMContentLoaded', async function() {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -32,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const calendarTitle = document.getElementById('calendar-title');
     const prevWeekBtn = document.getElementById('prev-week-btn');
     const nextWeekBtn = document.getElementById('next-week-btn');
-    const loadingMessage = document.getElementById('loading-message');
+    // Removido loadingMessage, agora usamos apenas spinnerOverlay
     const calendarGridHeaders = document.getElementById('calendar-grid-headers');
     const calendarGridBody = document.getElementById('calendar-grid-body');
     const calendarHours = document.querySelector('.calendar-hours');
@@ -98,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Funções da API ---
     async function fetchRooms() {
         try {
-            const response = await fetch('/api/rooms', { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/rooms`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 rooms = await response.json();
                 if (rooms.length > 0 && currentRoomId === null) {
@@ -116,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function fetchUsers() {
         try {
-            const response = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -132,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function fetchUsersSearch(query, searchBy) {
         try {
-            const response = await fetch(`/api/users/search?query=${query}&search_by=${searchBy}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/users/search?query=${query}&search_by=${searchBy}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -154,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const endIso = toApiFormat(endDate);
 
         try {
-            const response = await fetch(`/api/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar agendamentos.'), []);
         } catch (error) {
             showAlert('Erro de conexão ao buscar agendamentos.');
@@ -170,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const endIso = toApiFormat(endDate);
 
         try {
-            const response = await fetch(`/api/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar seus agendamentos.'), []);
         } catch (error) {
             showAlert('Erro de conexão ao buscar seus agendamentos.');
@@ -181,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function createBooking() {
         const payload = buildBookingPayload();
         try {
-            const response = await fetch('/api/agendamentos', {
+            const response = await fetch(`${baseUrl}/agendamentos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
@@ -201,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function updateBooking(bookingId) {
         const payload = buildBookingPayload();
         try {
-            const response = await fetch(`/api/agendamentos/${bookingId}`, {
+            const response = await fetch(`${baseUrl}/agendamentos/${bookingId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
@@ -220,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function deleteBooking(bookingId) {
         try {
-            const response = await fetch(`/api/agendamentos/${bookingId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/agendamentos/${bookingId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             const data = await response.json();
             if (response.ok) {
                 bookingModal.style.display = 'none';
@@ -238,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const name = prompt('Nome da nova sala:');
         if (!name) return;
         try {
-            const response = await fetch('/api/rooms', {
+            const response = await fetch(`${baseUrl}/rooms`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name })
@@ -260,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const roomId = parseInt(editRoomId.value);
         const newName = editRoomName.value;
         try {
-            const response = await fetch(`/api/rooms/${roomId}`, {
+            const response = await fetch(`${baseUrl}/rooms/${roomId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ name: newName })
@@ -281,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function deleteRoom(roomId) {
         if (!confirm('Deseja realmente excluir esta sala? Isso removerá todos os seus agendamentos.')) return;
         try {
-            const response = await fetch(`/api/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
                 if (currentRoomId === roomId) currentRoomId = rooms.find(r => r.active)?.id || null;
                 await fetchRooms();
@@ -300,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const room = rooms.find(r => r.id === roomId);
         if (!room) return;
         try {
-            const response = await fetch(`/api/rooms/${roomId}`, {
+            const response = await fetch(`${baseUrl}/rooms/${roomId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ active: !room.active })
@@ -336,11 +340,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             calendarGridBody.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Nenhuma sala ativa encontrada.</div>';
             calendarGridHeaders.innerHTML = '';
             calendarTitle.textContent = 'Nenhuma Sala Selecionada';
-            loadingMessage.style.display = 'none';
             return;
         }
 
-        loadingMessage.style.display = 'block';
+        spinnerOverlay.style.display = 'flex'; // Mostra o spinner overlay
         const weekDates = Array.from({length: 6}, (_, i) => {
             const date = new Date(currentWeekStart);
             date.setDate(currentWeekStart.getDate() + i);
@@ -353,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ).join('');
 
         const bookings = await fetchBookings(currentWeekStart);
-        loadingMessage.style.display = 'none';
+        spinnerOverlay.style.display = 'none'; // Esconde o spinner overlay
 
         calendarGridBody.innerHTML = weekDates.map(date => `
             <div class="calendar-day-cell">
@@ -442,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function openBookingModalForEdit(bookingId) {
         try {
-            const response = await fetch(`/api/agendamentos/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${baseUrl}/agendamentos/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Falha ao carregar dados do agendamento.');
             const booking = await response.json();
             

@@ -332,8 +332,17 @@ body {
 .loading-message {
     text-align: center;
     margin-top: 1rem;
-    color: #7daaff;
-    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.spinner-inline {
+    border: 4px solid rgba(125, 170, 255, 0.2);
+    border-left-color: #7daaff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
 }
 
 /* --- Spinner Overlay --- */
@@ -619,6 +628,12 @@ textarea {
 .footer-col ul li a:hover,
 .footer-col .contact-card a:hover {
     color: var(--primary-color);
+}
+
+/* Estilo para elementos sem hover na seção SOLUÇÕES */
+.footer-col ul.no-hover li {
+    color: #e0e0e0;
+    cursor: default;
 }
 
 .footer-col.company-info .footer-logo {

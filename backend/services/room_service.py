@@ -4,7 +4,8 @@ from app.models import Room
 
 class RoomService:
     def get_all_rooms(self):
-        if not db_manager.connect():
+        conn = db_manager.connect()
+        if not conn:
             return None, "Erro de conexão com o banco de dados."
         try:
             cursor = db_manager.connection.cursor()
@@ -17,13 +18,14 @@ class RoomService:
             return rooms, None
         except Exception as e:
             print(f"Erro ao buscar salas: {e}")
-            return None, f"Erro ao buscar salas: {e}"
+            return [], f"Erro ao buscar salas: {e}"  # Retorna lista vazia em vez de None
         finally:
             if db_manager.connection:
                 db_manager.connection.close()
 
     def get_room_by_id(self, room_id):
-        if not db_manager.connect():
+        conn = db_manager.connect()
+        if not conn:
             return None, "Erro de conexão com o banco de dados."
         try:
             cursor = db_manager.connection.cursor()
@@ -42,17 +44,22 @@ class RoomService:
                 db_manager.connection.close()
 
     def create_room(self, name):
-        if not db_manager.connect():
+        conn = db_manager.connect()
+        if not conn:
             return None, "Erro de conexão com o banco de dados."
         try:
             cursor = db_manager.connection.cursor()
-            # Get the next ID for the room
-            sql_next_id = "SELECT NVL(MAX(ID_SALA), 0) + 1 FROM MX2_SALAS"
-            cursor.execute(sql_next_id)
-            new_id = cursor.fetchone()[0]
-
-            sql = "INSERT INTO MX2_SALAS (ID_SALA, NOME_SALA, ATIVA) VALUES (:id, :name, 1)"
-            cursor.execute(sql, id=new_id, name=name)
+            
+            # Não precisamos mais gerar o ID manualmente, pois é uma coluna de identidade
+            sql = "INSERT INTO MX2_SALAS (NOME_SALA, ATIVA) VALUES (:name, 1) RETURNING ID_SALA INTO :new_id"
+            
+            # Variável para receber o ID gerado automaticamente
+            new_id_var = cursor.var(int)
+            cursor.execute(sql, name=name, new_id=new_id_var)
+            
+            # Obtém o ID gerado
+            new_id = new_id_var.getvalue()[0]
+            
             db_manager.connection.commit()
             return Room(id=new_id, name=name, active=True), None
         except Exception as e:
@@ -64,7 +71,8 @@ class RoomService:
                 db_manager.connection.close()
 
     def update_room(self, room_id, name, active):
-        if not db_manager.connect():
+        conn = db_manager.connect()
+        if not conn:
             return None, "Erro de conexão com o banco de dados."
         try:
             cursor = db_manager.connection.cursor()
@@ -96,7 +104,8 @@ class RoomService:
                 db_manager.connection.close()
 
     def delete_room(self, room_id):
-        if not db_manager.connect():
+        conn = db_manager.connect()
+        if not conn:
             return None, "Erro de conexão com o banco de dados."
         try:
             cursor = db_manager.connection.cursor()

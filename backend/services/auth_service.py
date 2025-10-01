@@ -48,6 +48,10 @@ def authenticate_user(login, senha_fornecida):
         }
         token = jwt.encode(payload, os.environ.get('SECRET_KEY'), algorithm='HS256')
         
+        # Garantir que o token seja uma string
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
+        
         return {
             "token": token,
             "profile": perfil,
