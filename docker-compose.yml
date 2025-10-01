@@ -6,7 +6,7 @@ services:
     container_name: agendamento-backend
     restart: always
     ports:
-      - "8001:5000"
+      - "8001:8000"
     environment:
       - FLASK_APP=run.py
       - FLASK_ENV=production
