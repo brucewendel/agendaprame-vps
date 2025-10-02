@@ -3,7 +3,7 @@ version: '3'
 services:
   backend:
     build: ./backend
-    container_name: agendamento-backend
+    container_name: agendamento-backend-prod
     restart: always
     ports:
       - "8001:8000"
@@ -15,7 +15,8 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: agendamento-frontend
+    container_name: agendamento-frontend-prod
+  
     restart: always
     ports:
       - "8002:80"
