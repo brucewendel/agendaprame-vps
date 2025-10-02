@@ -4,11 +4,7 @@ WORKDIR /app
 
 # Instalar dependências do Oracle Client (necessário para cx_Oracle)
 # Usamos 'libaio1' para a versão Debian e incluímos as ferramentas básicas.
-RUN apt-get update && apt-get install -y \
-    libaio1 \
-    wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libaio1 wget unzip && rm -rf /var/lib/apt/lists/*
 
 # Baixar e instalar Oracle Instant Client
 RUN mkdir -p /opt/oracle
