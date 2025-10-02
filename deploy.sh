@@ -5,13 +5,20 @@ set -e  # Parar o script se qualquer comando falhar
 
 echo "Iniciando deploy do sistema de Agendamento de Salas..."
 
+# Verificar se existem containers antigos rodando
+if docker ps | grep -q "agendamento_"; then
+  echo "AVISO: Containers antigos estão em execução."
+  echo "Os novos containers serão construídos sem afetar os existentes."
+  echo "Após verificar que os novos estão funcionando, você pode parar os antigos com:"
+  echo "docker stop agendamento_frontend agendamento_backend"
+fi
+
 # Puxar as últimas alterações do repositório
 echo "Atualizando código do repositório..."
 git pull
 
-# Parar os containers existentes
-echo "Parando containers existentes..."
-docker-compose down || true  # Não falhar se não existirem containers
+# Não vamos parar os containers existentes para não interromper o serviço
+# Em vez disso, vamos apenas construir as novas imagens
 
 # Reconstruir as imagens
 echo "Reconstruindo imagens Docker..."
