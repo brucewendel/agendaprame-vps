@@ -10,12 +10,10 @@ RUN apt-get update && apt-get install -y libaio1 wget unzip && rm -rf /var/lib/a
 RUN mkdir -p /opt/oracle
 WORKDIR /opt/oracle
 # Nota: Você pode precisar atualizar o link do wget para a última versão estável do Instant Client
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/219000/instantclient-basiclite-linux.x64-21.9.0.0.0dbru.zip -O instantclient-basiclite-linuxx64.zip && \
-    unzip instantclient-basiclite-linuxx64.zip && \
-    rm instantclient-basiclite-linuxx64.zip && \
-    cd /opt/oracle/instantclient* && \
-    echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && \
-    ldconfig
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/219000/instantclient-basiclite-linux.x64-21.9.0.0.0dbru.zip -O instantclient.zip
+RUN unzip instantclient.zip
+RUN rm instantclient.zip
+RUN cd /opt/oracle/instantclient* && echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
 
 # Configurar variáveis de ambiente para Oracle
 ENV LD_LIBRARY_PATH=/opt/oracle/instantclient*:$LD_LIBRARY_PATH
