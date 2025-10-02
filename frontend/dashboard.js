@@ -1,6 +1,6 @@
 // URL base para API - Altere entre as opções conforme o ambiente
-const baseUrl = 'http://127.0.0.1:5000';
-// const baseUrl = '/api'; // Use esta opção para produção/deploy
+// const baseUrl = 'http://127.0.0.1:5000'; // Use esta opção para desenvolvimento local
+const baseUrl = '/api'; // Opção para produção/deploy
 
 document.addEventListener('DOMContentLoaded', async function() {
     const token = localStorage.getItem('jwtToken');
