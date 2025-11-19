@@ -7,4 +7,3 @@ main.spec/
 *.egg-info/
 *.log
 .env
-backend/app/config.py
