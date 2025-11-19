@@ -4,6 +4,7 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
 from email import encoders
 from datetime import datetime
 from ics import Calendar, Event
@@ -37,7 +38,8 @@ def send_booking_confirmation(recipient_email, booking_details):
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Confirmação de Agendamento: {e.name}"
     message["From"] = sender_email
-    message["To"] = recipient_email
+    to_emails = [recipient_email, "ticket@mx2tech.com.br"]
+    message["To"] = ", ".join(to_emails)
 
     # Corpo do e-mail em HTML
     html = f"""
@@ -48,7 +50,7 @@ def send_booking_confirmation(recipient_email, booking_details):
                     <table style="background-color: #245de0;" width="100%" cellspacing="0" cellpadding="0">
                         <tbody>
                             <tr>
-                                <td style="padding: 20px;" align="center"><img src="https://mx2tech.cloud/images/Logo%20Mx2Tech%20White.png" alt="image" width="120"></td>
+                                <td style="padding: 20px;" align="center"><img src="cid:logo" alt="image" width="60"></td>
                             </tr>
                             <tr>
                                 <td style="padding: 0 20px 30px 20px;" align="center">
@@ -113,6 +115,12 @@ def send_booking_confirmation(recipient_email, booking_details):
     """
     message.attach(MIMEText(html, "html"))
 
+    with open(r'c:\project\Agendamento_sala\backend\img\logo.png', 'rb') as f:
+        img_data = f.read()
+    image = MIMEImage(img_data)
+    image.add_header('Content-ID', '<logo>')
+    message.attach(image)
+
     # Anexar o arquivo .ics
     part = MIMEBase("text", "calendar", name="invite.ics")
     part.set_payload(ics_content)
@@ -125,8 +133,8 @@ def send_booking_confirmation(recipient_email, booking_details):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-        print(f"E-mail de confirmação enviado para {recipient_email}")
+            server.sendmail(sender_email, to_emails, message.as_string())
+        print(f"E-mail de confirmação enviado para {', '.join(to_emails)}")
         return True
     except Exception as e:
         print(f"Falha ao enviar e-mail: {e}")
@@ -142,9 +150,10 @@ def send_booking_update_notification(recipient_email, booking_details):
     smtp_port = Config.SMTP_PORT
 
     message = MIMEMultipart("alternative")
-    message["Subject"] = f"Atualização de Agendamento: {booking_details.get('summary', '')}"
+    message["Subject"] = f"Atualização de Agendamento: {booking_details.get('summary', 'Agendamento de Sala')}"
     message["From"] = sender_email
-    message["To"] = recipient_email
+    to_emails = [recipient_email, "ticket@mx2tech.com.br"]
+    message["To"] = ", ".join(to_emails)
 
     html = f"""
     <table style="background: #f9f9f9; margin: 0 auto; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Segoe UI', Arial, sans-serif;">
@@ -153,15 +162,14 @@ def send_booking_update_notification(recipient_email, booking_details):
                 <td>
                     <table style="background-color: #ffc107;" width="100%" cellspacing="0" cellpadding="0">
                         <tbody>
-                            <tr>
-                                <td style="padding: 20px;" align="center"><img src="https://mx2tech.cloud/images/Logo%20Mx2Tech%20White.png" alt="image" width="120"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 0 20px 30px 20px;" align="center">
-                                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">Agendamento Atualizado!</h1>
-                                </td>
-                            </tr>
-                        </tbody>
+                                        <tr>
+                                            <td style="padding: 20px;" align="center"><img src="cid:logo" alt="image" width="60"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 0 20px 30px 20px;" align="center">
+                                                <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">Agendamento Atualizado!</h1>
+                                            </td>
+                                        </tr>                        </tbody>
                     </table>
                     <table style="background: #ffffff;" width="100%" cellspacing="0" cellpadding="0">
                         <tbody>
@@ -189,12 +197,18 @@ def send_booking_update_notification(recipient_email, booking_details):
     """
     message.attach(MIMEText(html, "html"))
 
+    with open(r'c:\project\Agendamento_sala\backend\img\logo.png', 'rb') as f:
+        img_data = f.read()
+    image = MIMEImage(img_data)
+    image.add_header('Content-ID', '<logo>')
+    message.attach(image)
+
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-        print(f"E-mail de atualização enviado para {recipient_email}")
+            server.sendmail(sender_email, to_emails, message.as_string())
+        print(f"E-mail de atualização enviado para {', '.join(to_emails)}")
         return True
     except Exception as e:
         print(f"Falha ao enviar e-mail de atualização: {e}")
@@ -210,9 +224,10 @@ def send_booking_cancellation_notification(recipient_email, booking_details):
     smtp_port = Config.SMTP_PORT
 
     message = MIMEMultipart("alternative")
-    message["Subject"] = f"Cancelamento de Agendamento: {booking_details.get('summary', '')}"
+    message["Subject"] = f"Cancelamento de Agendamento: {booking_details.get('summary', 'Agendamento de Sala')}"
     message["From"] = sender_email
-    message["To"] = recipient_email
+    to_emails = [recipient_email, "ticket@mx2tech.com.br"]
+    message["To"] = ", ".join(to_emails)
 
     html = f"""
     <table style="background: #f9f9f9; margin: 0 auto; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Segoe UI', Arial, sans-serif;">
@@ -222,7 +237,7 @@ def send_booking_cancellation_notification(recipient_email, booking_details):
                     <table style="background-color: #dc3545;" width="100%" cellspacing="0" cellpadding="0">
                         <tbody>
                             <tr>
-                                <td style="padding: 20px;" align="center"><img src="https://mx2tech.cloud/images/Logo%20Mx2Tech%20White.png" alt="image" width="120"></td>
+                                <td style="padding: 20px;" align="center"><img src="cid:logo" alt="image" width="60"></td>
                             </tr>
                             <tr>
                                 <td style="padding: 0 20px 30px 20px;" align="center">
@@ -256,12 +271,18 @@ def send_booking_cancellation_notification(recipient_email, booking_details):
     """
     message.attach(MIMEText(html, "html"))
 
+    with open(r'c:\project\Agendamento_sala\backend\img\logo.png', 'rb') as f:
+        img_data = f.read()
+    image = MIMEImage(img_data)
+    image.add_header('Content-ID', '<logo>')
+    message.attach(image)
+
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(smtp_server, smtp_port, context=context) as server:
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, message.as_string())
-        print(f"E-mail de cancelamento enviado para {recipient_email}")
+            server.sendmail(sender_email, to_emails, message.as_string())
+        print(f"E-mail de cancelamento enviado para {', '.join(to_emails)}")
         return True
     except Exception as e:
         print(f"Falha ao enviar e-mail de cancelamento: {e}")

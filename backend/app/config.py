@@ -8,7 +8,7 @@ class Config:
     DB_DSN = os.environ.get('DB_DSN')
 
     # Configurações de E-mail SMTP
-    SMTP_SERVER = "ns20.mx2tech.cloud"
+    SMTP_SERVER = "ns50.meuemailmx.com.br"
     SMTP_PORT = 465
-    SMTP_USER = "stvm2@jadistribuidora.net"
-    SMTP_PASSWORD = "jad#3216@"
+    SMTP_USER = "suporte@jadistribuidora.net"
+    SMTP_PASSWORD = "Jad@20172018"
