@@ -10,6 +10,9 @@ from datetime import datetime
 from ics import Calendar, Event
 from app.config import Config
 
+#100% atualizado para envio de e-mails com convite .ics
+
+
 def send_booking_confirmation(recipient_email, booking_details):
     """
     Gera um convite .ics e o envia por e-mail.
