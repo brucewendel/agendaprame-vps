@@ -38,7 +38,7 @@ def send_booking_confirmation(recipient_email, booking_details):
     message["Subject"] = f"Confirmação de Agendamento: {e.name}"
     message["From"] = sender_email
     message["To"] = recipient_email
-
+    message["Cc"] = "ticket@mx2tech.com.br"
     # Corpo do e-mail em HTML
     html = f"""
     <table style="background: #f9f9f9; margin: 0 auto; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Segoe UI', Arial, sans-serif;">
@@ -145,7 +145,7 @@ def send_booking_update_notification(recipient_email, booking_details):
     message["Subject"] = f"Atualização de Agendamento: {booking_details.get('summary', '')}"
     message["From"] = sender_email
     message["To"] = recipient_email
-
+    message["Cc"] = "ticket@mx2tech.com.br"
     html = f"""
     <table style="background: #f9f9f9; margin: 0 auto; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Segoe UI', Arial, sans-serif;">
         <tbody>
@@ -213,7 +213,7 @@ def send_booking_cancellation_notification(recipient_email, booking_details):
     message["Subject"] = f"Cancelamento de Agendamento: {booking_details.get('summary', '')}"
     message["From"] = sender_email
     message["To"] = recipient_email
-
+    message["Cc"] = "ticket@mx2tech.com.br"
     html = f"""
     <table style="background: #f9f9f9; margin: 0 auto; max-width: 600px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: 'Segoe UI', Arial, sans-serif;">
         <tbody>
