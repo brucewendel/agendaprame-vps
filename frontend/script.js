@@ -1,6 +1,6 @@
 // URL base para API - Altere entre as opções conforme o ambiente
-//const baseUrl = 'http://127.0.0.1:5000';
-const baseUrl = '/api'; // Use esta opção para produção/deploy
+const baseUrl = 'http://127.0.0.1:5000';
+//const baseUrl = '/api'; // Use esta opção para produção/deploy
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginInput = document.getElementById('login');
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const rememberMe = document.getElementById('remember-me');
 
     // Pre-fill from localStorage
-    if (localStorage.getItem('rememberedLogin')) {
+    if (rememberMe && localStorage.getItem('rememberedLogin')) {
         loginInput.value = localStorage.getItem('rememberedLogin');
         passwordInput.value = localStorage.getItem('rememberedPassword');
         rememberMe.checked = true;
@@ -53,10 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('userName', data.name);
 
                 // Handle "Remember me"
-                if (rememberMe.checked) {
+                if (rememberMe && rememberMe.checked) {
                     localStorage.setItem('rememberedLogin', login);
                     localStorage.setItem('rememberedPassword', senha);
-                } else {
+                } else if (rememberMe) {
                     localStorage.removeItem('rememberedLogin');
                     localStorage.removeItem('rememberedPassword');
                 }

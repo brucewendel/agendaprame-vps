@@ -1024,3 +1024,22 @@ textarea {
     -webkit-text-fill-color: transparent;
     color: transparent;
 }
+
+.main-footer.simple-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 1rem 2rem;
+    margin-top: 2rem;
+    border-top: 1px solid var(--light-border-color);
+    background: #111827;
+    color: rgba(224, 224, 224, 0.72);
+    font-size: 0.8rem;
+}
+
+.footer-logo-minimal {
+    height: 18px;
+    width: auto;
+    opacity: 0.8;
+}

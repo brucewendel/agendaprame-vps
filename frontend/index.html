@@ -1,36 +1,48 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Agendamento de Salas</title>
-    <link rel="icon" href="https://mx2tech.com.br/images/Logo%20Mx2Tech%20no%20Text.png" type="image/png">
+    <title>Login | Painel de Agendamento Mx2Tech</title>
+    <link rel="icon" href="img/logo.ico" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <img src="https://mx2tech.com.br/images/Logo%20Mx2Tech%20no%20Text.png" alt="Logo da Empresa" class="login-logo">
-            <h1>Agende Aqui</h1>
-            <p>Faça login para continuar</p>
-            <form id="login-form">
-                <div class="input-group">
-                    <label for="login">Usuário</label>
-                    <input type="text" id="login" name="login" required autocomplete="username">
-                </div>
-                <div class="input-group">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" required autocomplete="current-password">
-                </div>
-                <div class="input-group-remember">
-                    <input type="checkbox" id="remember-me">
-                    <label for="remember-me">Salvar login e senha</label>
-                </div>
-                <button type="submit">Entrar</button>
-            </form>
-            <div id="message-area" class="message-area"></div>
-        </div>
+    <div class="bubbles-container" aria-hidden="true">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
     </div>
+
+    <div class="login-card">
+        <img src="img/LogoMx.svg" alt="MX2TECH Logo" class="logo">
+
+        <h1>Painel de Agendamento</h1>
+        <p class="subtitle">Bem-vindo(a)!</p>
+
+        <form id="login-form">
+            <div class="input-group">
+                <input type="text" id="login" name="login" placeholder="Usuário" required autocomplete="username">
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="senha" name="senha" placeholder="Senha" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-entrar">Entrar</button>
+        </form>
+
+        <div id="message-area" class="message-area"></div>
+    </div>
+
+    <footer class="powered">
+        <!-- <img src="img/LogoMx.svg" alt="MX2Tech Logo" class="powered-logo"> -->
+        <span>Powered by MX2Tech Tecnologia © 2026</span>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 </html>
