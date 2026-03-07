@@ -71,13 +71,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     const userSearchButton = document.getElementById('user-search-button');
     const userSearchResults = document.getElementById('user-search-results');
 
-    // --- Modal de Alerta GenÃ©rico ---
+    // --- Modal de Alerta Genérico ---
     const alertModal = document.getElementById('alert-modal');
     const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
     const alertModalOkBtn = document.getElementById('alert-modal-ok-btn');
     const alertModalMessage = document.getElementById('alert-modal-message');
 
-    // --- FunÃ§Ãµes do Modal de Alerta ---
+    // --- Funções do Modal de Alerta ---
     function showAlert(message) {
         alertModalMessage.textContent = message;
         alertModal.style.display = 'flex';
@@ -95,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // --- InicializaÃ§Ã£o ---
+    // --- Inicialização ---
     const userName = localStorage.getItem('userName');
-    userNameSpan.textContent = userName && userName !== 'undefined' ? `OlÃ¡, ${userName}` : 'OlÃ¡, UsuÃ¡rio';
+    userNameSpan.textContent = userName && userName !== 'undefined' ? `Olá, ${userName}` : 'Olá, Usuário';
     
-    // --- FunÃ§Ãµes da API ---
+    // --- Funções da API ---
     async function fetchRooms() {
         try {
             const response = await fetch(`${baseUrl}/rooms`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(`Erro ao carregar salas: ${error.message}`);
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao buscar salas. Verifique o servidor.');
+            showAlert('Erro de conexão ao buscar salas. Verifique o servidor.');
         }
     }
 
@@ -125,11 +125,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return await response.json();
             } else {
                 const error = await response.json();
-                showAlert(`Erro ao carregar usuÃ¡rios: ${error.message}`);
+                showAlert(`Erro ao carregar usuários: ${error.message}`);
                 return [];
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao buscar usuÃ¡rios. Verifique o servidor.');
+            showAlert('Erro de conexão ao buscar usuários. Verifique o servidor.');
             return [];
         }
     }
@@ -141,11 +141,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return await response.json();
             } else {
                 const error = await response.json();
-                showAlert(`Erro ao buscar usuÃ¡rios: ${error.message}`);
+                showAlert(`Erro ao buscar usuários: ${error.message}`);
                 return [];
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao buscar usuÃ¡rios. Verifique o servidor.');
+            showAlert('Erro de conexão ao buscar usuários. Verifique o servidor.');
             return [];
         }
     }
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await fetch(`${baseUrl}/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar agendamentos.'), []);
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao buscar agendamentos.');
+            showAlert('Erro de conexão ao buscar agendamentos.');
             return [];
         }
     }
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const response = await fetch(`${baseUrl}/agendamentos?start=${startIso}&end=${endIso}`, { headers: { 'Authorization': `Bearer ${token}` } });
             return response.ok ? await response.json() : (showAlert('Erro ao carregar seus agendamentos.'), []);
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao buscar seus agendamentos.');
+            showAlert('Erro de conexão ao buscar seus agendamentos.');
             return [];
         }
     }
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(data.message || 'Erro desconhecido ao criar agendamento.');
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao criar agendamento.');
+            showAlert('Erro de conexão ao criar agendamento.');
         }
     }
 
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(data.message || 'Erro desconhecido ao atualizar agendamento.');
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao atualizar agendamento.');
+            showAlert('Erro de conexão ao atualizar agendamento.');
         }
     }
 
@@ -233,11 +233,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(data.message || 'Erro ao excluir agendamento.');
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao excluir agendamento.');
+            showAlert('Erro de conexão ao excluir agendamento.');
         }
     }
 
-    // --- FunÃ§Ãµes de Gerenciamento de Salas (Admin) ---
+    // --- Funções de Gerenciamento de Salas (Admin) ---
     async function addNewRoom() {
         const name = prompt('Nome da nova sala:');
         if (!name) return;
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(`Erro ao criar sala: ${error.message}`);
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao criar sala.');
+            showAlert('Erro de conexão ao criar sala.');
         }
     }
 
@@ -278,12 +278,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(`Erro ao atualizar sala: ${error.message}`);
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao atualizar sala.');
+            showAlert('Erro de conexão ao atualizar sala.');
         }
     }
 
     async function deleteRoom(roomId) {
-        if (!confirm('Deseja realmente excluir esta sala? Isso removerÃ¡ todos os seus agendamentos.')) return;
+        if (!confirm('Deseja realmente excluir esta sala? Isso removerá todos os seus agendamentos.')) return;
         try {
             const response = await fetch(`${baseUrl}/rooms/${roomId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(`Erro ao excluir sala: ${error.message}`);
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao excluir sala.');
+            showAlert('Erro de conexão ao excluir sala.');
         }
     }
 
@@ -318,11 +318,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 showAlert(`Erro ao alterar status da sala: ${error.message}`);
             }
         } catch (error) {
-            showAlert('Erro de conexÃ£o ao alterar status da sala.');
+            showAlert('Erro de conexão ao alterar status da sala.');
         }
     }
 
-    // --- RenderizaÃ§Ã£o ---
+    // --- Renderização ---
     function renderRoomTabs(rooms) {
         const activeRooms = rooms.filter(room => room.active);
         roomList.innerHTML = activeRooms.map(room => 
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         calendarTitle.textContent = `${weekDates[0].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})} - ${weekDates[5].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})}`;
-        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">HorÃ¡rios</div>' + weekDates.map(date => 
+        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">Horários</div>' + weekDates.map(date => 
             `<div class="calendar-day-header">${date.toLocaleDateString('pt-BR', {weekday: 'short'})}<br>${date.toLocaleDateString('pt-BR', {day: '2-digit'})}</div>`
         ).join('');
 
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // --- FunÃ§Ãµes de Abertura de Modais ---
+    // --- Funções de Abertura de Modais ---
     function openBookingModalForCreation(event) {
         if (currentRoomId === null) {
             showAlert('Nenhuma sala selecionada para agendar.');
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         bookingForm.reset();
         bookingForm.removeAttribute('data-booking-id');
 
-        // Habilita todos os campos do formulÃ¡rio, exceto o da sala
+        // Habilita todos os campos do formulário, exceto o da sala
         Array.from(bookingForm.elements).forEach(el => el.disabled = false);
         document.getElementById('modal-sala').disabled = true;
 
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (booking.ID_USUARIO === userId) {
                     ownerName = userName;
                 } else {
-                    ownerName = 'UsuÃ¡rio desconhecido';
+                    ownerName = 'Usuário desconhecido';
                 }
             }
 
@@ -484,17 +484,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('modal-fim').value = booking.DATA_FIM.replace(' ', 'T');
             
             const desc = booking.DESCRICAO || '';
-            const equipmentRegex = /Equipamentos necessÃ¡rios:[\s\S]*/;
+            const equipmentRegex = /Equipamentos necessários:[\s\S]*/;
             document.getElementById('modal-descricao').value = desc.replace(equipmentRegex, '').trim();
             const equipmentMatch = desc.match(equipmentRegex);
             document.getElementById('modal-projetor').checked = equipmentMatch ? equipmentMatch[0].includes('Projetor') : false;
-            document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('RÃ©gua de Energia') : false;
+            document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('Régua de Energia') : false;
             document.getElementById('modal-suporte-ti').checked = equipmentMatch ? equipmentMatch[0].includes('Suporte de TI') : false;
 
             deleteBookingBtn.style.display = canEdit ? 'inline-block' : 'none';
             bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-block' : 'none';
             Array.from(bookingForm.elements).forEach(el => el.disabled = !canEdit);
-            document.getElementById('modal-sala').disabled = true; // Sala nÃ£o pode ser alterada
+            document.getElementById('modal-sala').disabled = true; // Sala não pode ser alterada
 
             bookingModal.style.display = 'flex';
         } catch (error) {
@@ -521,9 +521,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="booking-item">
                     <h4>${booking.TITULO}</h4>
                     <p><strong>Sala:</strong> ${room ? room.name : 'Desconhecida'}</p>
-                    <p><strong>InÃ­cio:</strong> ${start.toLocaleDateString('pt-BR', options)}</p>
+                    <p><strong>Início:</strong> ${start.toLocaleDateString('pt-BR', options)}</p>
                     <p><strong>Fim:</strong> ${end.toLocaleDateString('pt-BR', options)}</p>
-                    ${booking.NOME_USUARIO ? `<p><strong>UsuÃ¡rio:</strong> ${booking.NOME_USUARIO}</p>` : ''}
+                    ${booking.NOME_USUARIO ? `<p><strong>Usuário:</strong> ${booking.NOME_USUARIO}</p>` : ''}
                 </div>
             `;
         }).join('');
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function renderUserSearchResults(users) {
         if (users.length === 0) {
-            userSearchResults.innerHTML = '<p>Nenhum usuÃ¡rio encontrado.</p>';
+            userSearchResults.innerHTML = '<p>Nenhum usuário encontrado.</p>';
             return;
         }
         userSearchResults.innerHTML = users.map(user => `
@@ -666,12 +666,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     function buildBookingPayload() {
         const equipmentObs = [
             document.getElementById('modal-projetor').checked && '- Projetor',
-            document.getElementById('modal-regua-energia').checked && '- RÃ©gua de Energia',
+            document.getElementById('modal-regua-energia').checked && '- Régua de Energia',
             document.getElementById('modal-suporte-ti').checked && '- Suporte de TI'
         ].filter(Boolean);
 
         const userDescription = document.getElementById('modal-descricao').value;
-        const finalDescription = [userDescription, equipmentObs.length > 0 ? 'Equipamentos necessÃ¡rios:\n' + equipmentObs.join('\n') : ''].filter(Boolean).join('\n\n');
+        const finalDescription = [userDescription, equipmentObs.length > 0 ? 'Equipamentos necessários:\n' + equipmentObs.join('\n') : ''].filter(Boolean).join('\n\n');
 
         const payload = {
             sala_id: currentRoomId,
@@ -709,12 +709,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         const endDate = new Date(fimValue);
 
         if (startDate < now && !bookingForm.dataset.bookingId) {
-            showAlert('NÃ£o Ã© possÃ­vel criar agendamentos para datas ou horÃ¡rios passados.');
+            showAlert('Não é possível criar agendamentos para datas ou horários passados.');
             return;
         }
 
         if (endDate <= startDate) {
-            showAlert('O horÃ¡rio de tÃ©rmino deve ser posterior ao horÃ¡rio de inÃ­cio.');
+            showAlert('O horário de término deve ser posterior ao horário de início.');
             return;
         }
 

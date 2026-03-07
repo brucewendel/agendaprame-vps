@@ -1,54 +1,49 @@
-import jwt
 import os
 from functools import wraps
+
+import jwt
 from flask import request, jsonify
 
+
 def jwt_required(f):
-    """
-    Decorador que valida um token JWT na requisição.
-    Adiciona 'user_id' e 'profile' ao objeto 'request'.
-    """
+    """Validate JWT token from Authorization: Bearer <token>."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        # O token é esperado no cabeçalho Authorization como 'Bearer <token>'
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            try:
-                # Extrai o token removendo o prefixo 'Bearer '
-                token = auth_header.split(" ")[1]
-            except IndexError:
-                return jsonify({"message": "Formato do token inválido."}), 401
-        
-        if not token:
-            return jsonify({"message": "Token de autenticação não fornecido."}), 401
+        auth_header = request.headers.get('Authorization', '').strip()
+        if not auth_header:
+            return jsonify({'message': 'Token de autenticacao nao fornecido.'}), 401
+
+        parts = auth_header.split(' ', 1)
+        if len(parts) != 2 or parts[0].lower() != 'bearer' or not parts[1].strip():
+            return jsonify({'message': 'Formato do token invalido.'}), 401
+
+        token = parts[1].strip()
+        secret_key = os.environ.get('SECRET_KEY')
+        if not secret_key:
+            return jsonify({'message': 'Configuracao de autenticacao invalida.'}), 500
 
         try:
-            # Decodifica e valida o token
-            payload = jwt.decode(token, os.environ.get('SECRET_KEY'), algorithms=['HS256'])
-            # Adiciona os dados do usuário ao objeto request
+            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
             request.user_id = payload['user_id']
             request.profile = payload['profile']
         except jwt.ExpiredSignatureError:
-            return jsonify({"message": "Token de autenticação expirado."}), 401
+            return jsonify({'message': 'Token de autenticacao expirado.'}), 401
         except jwt.InvalidTokenError:
-            return jsonify({"message": "Token de autenticação inválido."}), 401
+            return jsonify({'message': 'Token de autenticacao invalido.'}), 401
 
         return f(*args, **kwargs)
 
     return decorated
 
+
 def admin_required(f):
-    """
-    Decorador que garante que apenas administradores podem acessar a rota.
-    Deve ser usado após o decorador @jwt_required.
-    """
+    """Allow route access only for admin profile users."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
-        # O decorador jwt_required já adicionou o perfil do usuário à requisição
         if request.profile != 'Administrador':
-            return jsonify({"message": "Acesso não autorizado para este perfil."}), 403
-        
+            return jsonify({'message': 'Acesso nao autorizado para este perfil.'}), 403
         return f(*args, **kwargs)
 
     return decorated

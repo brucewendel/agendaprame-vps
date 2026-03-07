@@ -6,11 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginInput = document.getElementById('login');
     const passwordInput = document.getElementById('senha');
     const rememberMe = document.getElementById('remember-me');
+    localStorage.removeItem('rememberedPassword');
 
     // Pre-fill from localStorage
     if (rememberMe && localStorage.getItem('rememberedLogin')) {
         loginInput.value = localStorage.getItem('rememberedLogin');
-        passwordInput.value = localStorage.getItem('rememberedPassword');
         rememberMe.checked = true;
     }
 
@@ -55,10 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle "Remember me"
                 if (rememberMe && rememberMe.checked) {
                     localStorage.setItem('rememberedLogin', login);
-                    localStorage.setItem('rememberedPassword', senha);
                 } else if (rememberMe) {
                     localStorage.removeItem('rememberedLogin');
-                    localStorage.removeItem('rememberedPassword');
                 }
 
                 setTimeout(() => {
@@ -75,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageArea.textContent = 'Erro ao conectar com o servidor.';
             messageArea.classList.add('message-error');
             messageArea.style.display = 'block';
-            console.error('Erro na requisiÃ§Ã£o:', error);
+            console.error('Erro na requisição:', error);
         }
     });
 });

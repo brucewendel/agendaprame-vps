@@ -1,5 +1,6 @@
 import smtplib
 import ssl
+import logging
 from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,6 +10,8 @@ from email import encoders
 from datetime import datetime
 from ics import Calendar, Event
 from app.config import Config
+
+logger = logging.getLogger(__name__)
 
 # Caminho universal para o logo (assumindo estrutura: backend/services -> backend/img/logo.png)
 CURRENT_DIR = Path(__file__).resolve().parent        # backend/services
@@ -36,6 +39,19 @@ def _attach_logo_to_message(message_root):
         return False
 
 
+def _get_smtp_settings():
+    sender_email = Config.SMTP_USER
+    sender_password = Config.SMTP_PASSWORD
+    smtp_server = Config.SMTP_SERVER
+    smtp_port = Config.SMTP_PORT
+
+    if not sender_email or not sender_password or not smtp_server or not smtp_port:
+        logger.error('SMTP settings are missing in environment variables.')
+        return None
+
+    return sender_email, sender_password, smtp_server, smtp_port
+
+
 # 100% atualizado para envio de e-mails com convite .ics
 def send_booking_confirmation(recipient_email, booking_details):
     """
@@ -46,10 +62,10 @@ def send_booking_confirmation(recipient_email, booking_details):
                             Precisa conter ao menos: 'dtstart', 'dtend'.
                             Pode conter: 'summary', 'description', 'location', 'user_name'.
     """
-    sender_email = Config.SMTP_USER
-    sender_password = Config.SMTP_PASSWORD
-    smtp_server = Config.SMTP_SERVER
-    smtp_port = Config.SMTP_PORT
+    smtp_settings = _get_smtp_settings()
+    if not smtp_settings:
+        return False
+    sender_email, sender_password, smtp_server, smtp_port = smtp_settings
 
     # Criar o evento do calendário
     c = Calendar()
@@ -179,10 +195,10 @@ def send_booking_update_notification(recipient_email, booking_details):
     """
     Envia um e-mail de notificação de atualização de agendamento.
     """
-    sender_email = Config.SMTP_USER
-    sender_password = Config.SMTP_PASSWORD
-    smtp_server = Config.SMTP_SERVER
-    smtp_port = Config.SMTP_PORT
+    smtp_settings = _get_smtp_settings()
+    if not smtp_settings:
+        return False
+    sender_email, sender_password, smtp_server, smtp_port = smtp_settings
 
     message_root = MIMEMultipart("related")
     message_root["Subject"] = f"Atualização de Agendamento: {booking_details.get('summary', 'Agendamento de Sala')}"
@@ -257,10 +273,10 @@ def send_booking_cancellation_notification(recipient_email, booking_details):
     """
     Envia um e-mail de notificação de cancelamento de agendamento.
     """
-    sender_email = Config.SMTP_USER
-    sender_password = Config.SMTP_PASSWORD
-    smtp_server = Config.SMTP_SERVER
-    smtp_port = Config.SMTP_PORT
+    smtp_settings = _get_smtp_settings()
+    if not smtp_settings:
+        return False
+    sender_email, sender_password, smtp_server, smtp_port = smtp_settings
 
     message_root = MIMEMultipart("related")
     message_root["Subject"] = f"Cancelamento de Agendamento: {booking_details.get('summary', 'Agendamento de Sala')}"
