@@ -1,6 +1,6 @@
-// URL base para API - Altere entre as opções conforme o ambiente
-const baseUrl = 'http://127.0.0.1:5000';
-//const baseUrl = '/api'; // Use esta opção para produção/deploy
+// API base URL: local em desenvolvimento, proxy /api em produção
+const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const baseUrl = isLocalHost ? "http://127.0.0.1:5000" : "/api";
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginInput = document.getElementById('login');
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
             messageArea.textContent = 'Erro ao conectar com o servidor.';
             messageArea.classList.add('message-error');
             messageArea.style.display = 'block';
-            console.error('Erro na requisição:', error);
+            console.error('Erro na requisiÃ§Ã£o:', error);
         }
     });
 });
