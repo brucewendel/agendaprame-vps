@@ -5,19 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Agendamento de Salas</title>
     <link rel="icon" href="img/logo.ico" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/dashboard.css?v=20260307">
+    <link rel="stylesheet" href="/dashboard.css?v=20260323">
 </head>
 <body class="dark-mode">
     <div id="spinner-overlay" class="spinner-overlay"><div class="spinner"></div></div>
     <header class="main-header">
         <div class="header-left">
             <img src="img/LogoMx.svg" alt="Logo da Empresa" class="company-logo">
-            <h1 class="header-title">Agendamento de Salas <span class="header-subtitle">/ Dashboard</span></h1>
+            <h1 class="header-title">Agendamento de Salas</h1>
         </div>
         <div class="header-right">
             <span id="user-name"></span>
-            <button id="logout-btn" class="logout-btn">Sair <i class="fas fa-sign-out-alt"></i></button>
+            <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" aria-label="Alternar tema">
+                <span id="theme-icon" class="theme-icon" aria-hidden="true">&#127769;</span>
+            </button>
+            <button id="logout-btn" class="logout-btn">
+                <span class="logout-icon" aria-hidden="true">&#10162;</span>
+                <span>Sair</span>
+            </button>
         </div>
     </header>
 
@@ -33,9 +38,9 @@
 
         <section class="main-content-area">
             <div class="calendar-controls card">
-                <button id="prev-week-btn" class="nav-button"><i class="fas fa-chevron-left"></i></button>
+                <button id="prev-week-btn" class="nav-button" aria-label="Semana anterior"><span class="nav-glyph" aria-hidden="true">&#10094;</span></button>
                 <h2 id="calendar-title" class="calendar-title"></h2>
-                <button id="next-week-btn" class="nav-button"><i class="fas fa-chevron-right"></i></button>
+                <button id="next-week-btn" class="nav-button" aria-label="Próxima semana"><span class="nav-glyph" aria-hidden="true">&#10095;</span></button>
             </div>
             <div class="calendar-grid-wrapper card">
                 <div id="calendar-grid-headers" class="calendar-grid-headers"></div>
@@ -155,18 +160,22 @@
         <div class="modal-content card">
             <span class="close-btn" onclick="document.getElementById('user-search-modal').style.display='none'">&times;</span>
             <h3>Buscar Usuário</h3>
-            <div class="input-group">
-                <label for="user-search-query">Pesquisar por</label>
-                <input type="text" id="user-search-query" placeholder="Matrícula ou Nome">
+            <p class="user-search-subtitle">Defina o tipo de busca e selecione o usuário para o agendamento.</p>
+            <div class="input-group search-query-group">
+                <label for="user-search-query">Termo de pesquisa</label>
+                <input type="text" id="user-search-query" placeholder="Digite matrícula ou nome">
             </div>
-            <div class="input-group">
+            <div class="input-group search-mode-group">
+                <span class="search-mode-title">Buscar por</span>
                 <input type="radio" id="search-by-matricula" name="search-type" value="matricula" checked>
                 <label for="search-by-matricula">Matrícula</label>
                 <input type="radio" id="search-by-name" name="search-type" value="name">
                 <label for="search-by-name">Nome</label>
             </div>
             <button id="user-search-button" class="primary-button">Buscar</button>
-            <div id="user-search-results" class="user-search-results"></div>
+            <div id="user-search-results" class="user-search-results">
+                <p class="user-search-empty">Digite um termo para iniciar a busca.</p>
+            </div>
         </div>
     </div>
 
@@ -192,6 +201,8 @@
     </footer>
     
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-    <script src="/dashboard.js?v=20260307"></script>
+    <script src="/dashboard.js?v=20260323"></script>
 </body>
 </html>
+
+

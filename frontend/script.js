@@ -3,6 +3,9 @@ const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname
 const baseUrl = isLocalHost ? "http://127.0.0.1:5000" : "/api";
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Login sempre usa visual fixo (azul com bolhas), sem herdar tema do dashboard.
+    document.body.classList.remove('dark-mode', 'light-mode');
+
     const loginInput = document.getElementById('login');
     const passwordInput = document.getElementById('senha');
     const rememberMe = document.getElementById('remember-me');

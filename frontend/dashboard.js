@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const editRoomId = document.getElementById('edit-room-id');
     const editRoomName = document.getElementById('edit-room-name');
     const logoutBtn = document.getElementById('logout-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const userNameSpan = document.getElementById('user-name');
     const myBookingsBtn = document.getElementById('my-bookings-btn');
     const myBookingsModal = document.getElementById('my-bookings-modal');
@@ -76,6 +77,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
     const alertModalOkBtn = document.getElementById('alert-modal-ok-btn');
     const alertModalMessage = document.getElementById('alert-modal-message');
+    const themeToggleIcon = document.getElementById('theme-icon');
+    const logoutIcon = document.querySelector('#logout-btn .logout-icon');
+    const prevNavGlyph = document.querySelector('#prev-week-btn .nav-glyph');
+    const nextNavGlyph = document.querySelector('#next-week-btn .nav-glyph');
+
+    if (logoutIcon) logoutIcon.textContent = '\u27B2';
+    if (prevNavGlyph) prevNavGlyph.textContent = '\u276E';
+    if (nextNavGlyph) nextNavGlyph.textContent = '\u276F';
+
+    function applyTheme(themeClass) {
+        document.body.classList.remove('dark-mode', 'light-mode');
+        document.body.classList.add(themeClass);
+        localStorage.setItem('themeMode', themeClass);
+
+        if (themeToggleIcon) {
+            themeToggleIcon.textContent = themeClass === 'dark-mode' ? '\u{1F319}' : '\u2600\uFE0F';
+        }
+    }
+
+    const savedTheme = localStorage.getItem('themeMode');
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(savedTheme || (prefersLight ? 'light-mode' : 'dark-mode'));
 
     // --- Funções do Modal de Alerta ---
     function showAlert(message) {
@@ -331,7 +354,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderHours() {
-        calendarHours.innerHTML = Array.from({length: 14}, (_, i) => `<div>${(i + 7).toString().padStart(2, '0')}:00</div>`).join('');
+        calendarHours.innerHTML = Array.from({length: 15}, (_, i) => `<div>${(i + 7).toString().padStart(2, '0')}:00</div>`).join('');
     }
 
     async function renderCalendar() {
@@ -361,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         calendarGridBody.innerHTML = weekDates.map(date => `
             <div class="calendar-day-cell">
                 <div class="day-cell-content">
-                    ${Array.from({length: 14}, (_, hour) => `<div class="time-slot" data-date="${date.toISOString().split('T')[0]}" data-hour="${hour + 7}"></div>`).join('')}
+                    ${Array.from({length: 15}, (_, hour) => `<div class="time-slot" data-date="${date.toISOString().split('T')[0]}" data-hour="${hour + 7}"></div>`).join('')}
                 </div>
             </div>`
         ).join('');
@@ -377,40 +400,63 @@ document.addEventListener('DOMContentLoaded', async function() {
         bookingsForRoom.forEach(booking => {
             const start = new Date(booking.DATA_INICIO);
             const end = new Date(booking.DATA_FIM);
-            const isPast = end < new Date(); // Check if booking is in the past
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return;
+            const now = new Date();
 
-                let ownerName = booking.NOME_USUARIO;
-                if (!ownerName) {
-                    if (booking.ID_USUARIO === userId) {
-                        ownerName = userName;
-                    } else {
-                        ownerName = 'Desconhecido';
-                    }
+            let ownerName = booking.NOME_USUARIO;
+            if (!ownerName) {
+                if (booking.ID_USUARIO === userId) {
+                    ownerName = userName;
+                } else {
+                    ownerName = 'Desconhecido';
                 }
+            }
 
-                const startDay = start.getDay();
-            if (startDay === 0) return; // Ignora domingo
+            // Renderiza o mesmo agendamento em todos os dias da semana visível
+            // quando houver interseção de DateTime entre [início, fim] e o dia da grade.
+            weekDates.forEach((weekDate, dayOffset) => {
+                const dayCellContent = calendarGridBody.children[dayOffset]?.querySelector('.day-cell-content');
+                if (!dayCellContent) return;
 
-            const dayOffset = startDay - 1;
-            const bookingStartDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-            if (bookingStartDay < weekDates[0] || bookingStartDay > weekDates[5]) return;
+                const dayGridStart = new Date(weekDate);
+                dayGridStart.setHours(7, 0, 0, 0);
+                const dayGridEnd = new Date(weekDate);
+                dayGridEnd.setHours(22, 0, 0, 0); // grade vai de 07:00 até 21:59
 
-            const dayCellContent = calendarGridBody.children[dayOffset]?.querySelector('.day-cell-content');
-            if (dayCellContent) {
+                const segmentStartMs = Math.max(start.getTime(), dayGridStart.getTime());
+                const segmentEndMs = Math.min(end.getTime(), dayGridEnd.getTime());
+                if (segmentEndMs <= segmentStartMs) return;
+
+                const segmentStart = new Date(segmentStartMs);
+                const segmentEnd = new Date(segmentEndMs);
+                const isPastSegment = segmentEnd < now;
+
                 const bookingBlock = document.createElement('div');
                 bookingBlock.className = 'booking-block';
-                if (isPast) {
-                    bookingBlock.classList.add('past-booking'); // Add class for past bookings
+                if (isPastSegment) {
+                    bookingBlock.classList.add('past-booking');
                 }
                 bookingBlock.innerHTML = `${booking.TITULO}<br><small>${ownerName}</small>`;
                 bookingBlock.dataset.bookingId = booking.ID_AGENDAMENTO;
-                const slotHeight = 40;
-                const top = ((start.getHours() - 7) * slotHeight) + (start.getMinutes() * slotHeight / 60);
-                const height = (end.getTime() - start.getTime()) / (1000 * 60) / 60 * slotHeight;
+
+                const slotSample = dayCellContent.querySelector('.time-slot');
+                const slotHeightCss = getComputedStyle(document.documentElement).getPropertyValue('--slot-height').trim();
+                const slotHeight = slotSample
+                    ? slotSample.getBoundingClientRect().height
+                    : (parseFloat(slotHeightCss) || 40);
+
+                const minutesFromDayStart = ((segmentStart.getHours() - 7) * 60) + segmentStart.getMinutes();
+                const durationMinutes = (segmentEnd.getTime() - segmentStart.getTime()) / (1000 * 60);
+                const top = (minutesFromDayStart / 60) * slotHeight;
+                const height = (durationMinutes / 60) * slotHeight;
+
                 Object.assign(bookingBlock.style, { position: 'absolute', top: `${top}px`, height: `${height}px` });
-                bookingBlock.addEventListener('click', (e) => { e.stopPropagation(); openBookingModalForEdit(booking.ID_AGENDAMENTO); });
+                bookingBlock.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openBookingModalForEdit(booking.ID_AGENDAMENTO);
+                });
                 dayCellContent.appendChild(bookingBlock);
-            }
+            });
         });
     }
 
@@ -623,7 +669,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div>
                     <button class="edit-room-btn" data-room-id="${room.id}">Editar</button>
                     <button class="delete-room-btn" data-room-id="${room.id}">Excluir</button>
-                    <button class="toggle-room-status-btn" data-room-id="${room.id}">${room.active ? 'Desativar' : 'Ativar'}</button>
+                    <button class="toggle-room-status-btn ${room.active ? 'toggle-deactivate-btn' : 'toggle-activate-btn'}" data-room-id="${room.id}">${room.active ? 'Desativar' : 'Ativar'}</button>
                 </div>
             </div>`).join('');
         roomManagementModal.style.display = 'flex';
@@ -638,18 +684,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     function openUserSearchModal() {
         userSearchQuery.value = '';
         searchByMatriculaRadio.checked = true;
-        userSearchResults.innerHTML = '';
+        setUserSearchMessage('Digite um termo para iniciar a busca.');
         userSearchModal.style.display = 'flex';
+        setTimeout(() => userSearchQuery.focus(), 0);
+    }
+
+    function setUserSearchMessage(message) {
+        userSearchResults.innerHTML = `<p class="user-search-empty">${message}</p>`;
     }
 
     function renderUserSearchResults(users) {
         if (users.length === 0) {
-            userSearchResults.innerHTML = '<p>Nenhum usuário encontrado.</p>';
+            setUserSearchMessage('Nenhum usuário encontrado para os filtros informados.');
             return;
         }
         userSearchResults.innerHTML = users.map(user => `
             <div class="user-search-result-item">
-                <span>${user.name} (${user.id})</span>
+                <div class="user-search-result-main">
+                    <span class="user-search-result-name">${user.name}</span>
+                    <span class="user-search-result-id">Matrícula ${user.id}</span>
+                </div>
                 <button type="button" class="primary-button select-user-btn" data-user-id="${user.id}" data-user-name="${user.name}">Selecionar</button>
             </div>
         `).join('');
@@ -694,6 +748,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // --- Event Listeners ---
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('dark-mode') ? 'light-mode' : 'dark-mode';
+            applyTheme(nextTheme);
+        });
+    }
+
     logoutBtn.addEventListener('click', logout);
     prevWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() - 7); await renderCalendar(); });
     nextWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); await renderCalendar(); });
@@ -731,13 +792,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     // New event listeners for user search modal
     changeOwnerBtn.addEventListener('click', openUserSearchModal);
     userSearchButton.addEventListener('click', async () => {
-        const query = userSearchQuery.value;
+        const query = userSearchQuery.value.trim();
         const searchBy = searchByMatriculaRadio.checked ? 'matricula' : 'name';
-        if (query) {
+        if (!query) {
+            setUserSearchMessage('Digite algo para pesquisar.');
+            userSearchQuery.focus();
+            return;
+        }
+
+        userSearchButton.disabled = true;
+        userSearchButton.textContent = 'Buscando...';
+        try {
             const users = await fetchUsersSearch(query, searchBy);
             renderUserSearchResults(users);
-        } else {
-            userSearchResults.innerHTML = '<p>Digite algo para pesquisar.</p>';
+        } finally {
+            userSearchButton.disabled = false;
+            userSearchButton.textContent = 'Buscar';
+        }
+    });
+    userSearchQuery.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            userSearchButton.click();
         }
     });
     userSearchResults.addEventListener('click', (e) => {
@@ -781,3 +857,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     await fetchRooms();
     await renderCalendar();
 });
+

@@ -6,7 +6,7 @@
     <title>Login | Painel de Agendamento Mx2Tech</title>
     <link rel="icon" href="img/logo.ico" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=20260307">
+    <link rel="stylesheet" href="/style.css?v=20260319">
 </head>
 <body>
     <div class="bubbles-container" aria-hidden="true">
@@ -25,12 +25,16 @@
 
         <form id="login-form">
             <div class="input-group">
-                <input type="text" id="login" name="login" placeholder="Usuário" required autocomplete="username">
+                <input type="text" id="login" name="login" placeholder="Usuario" required autocomplete="username">
             </div>
 
             <div class="input-group">
                 <input type="password" id="senha" name="senha" placeholder="Senha" required autocomplete="current-password">
             </div>
+            <label class="remember-row" for="remember-me">
+                <input type="checkbox" id="remember-me" name="remember-me">
+                <span>Lembrar login</span>
+            </label>
 
             <button type="submit" class="btn-entrar">Entrar</button>
         </form>
@@ -40,9 +44,9 @@
 
     <footer class="powered">
         <!-- <img src="img/LogoMx.svg" alt="MX2Tech Logo" class="powered-logo"> -->
-        <span>Powered by MX2Tech Tecnologia © 2026</span>
+        <span>Powered by MX2Tech Tecnologia (c) 2026</span>
     </footer>
 
-    <script src="/script.js?v=20260307"></script>
+    <script src="/script.js?v=20260319"></script>
 </body>
 </html>
