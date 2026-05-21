@@ -74,7 +74,7 @@ pip install -r requirements.txt
 ```bash
 python run.py
 ```
-O servidor estará rodando em `http://127.0.0.1:5000`.
+Frontend e API rodam juntos em `http://127.0.0.1:8001` no Docker. A API tambem responde em `/api`.
 
 ### 2. Frontend
 

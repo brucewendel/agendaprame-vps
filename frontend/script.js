@@ -1,6 +1,5 @@
-// API base URL: local em desenvolvimento, proxy /api em produção
-const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-const baseUrl = isLocalHost ? "http://127.0.0.1:5000" : "/api";
+// API base URL carregada por api-config.js.
+const baseUrl = window.API_BASE_URL;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Login sempre usa visual fixo (azul com bolhas), sem herdar tema do dashboard.

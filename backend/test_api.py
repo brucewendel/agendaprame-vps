@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta
 
 # --- Configurações ---
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "http://127.0.0.1:8001"
 # ATENÇÃO: Substitua com credenciais válidas do seu ambiente
 ADMIN_CREDENTIALS = {"login": "admin", "senha": "admin_password"}
 USER_CREDENTIALS = {"login": "user", "senha": "user_password"}
@@ -165,7 +165,7 @@ def print_summary(results):
 # --- Execução dos Testes ---
 if __name__ == "__main__":
     print("Iniciando suíte de testes da API de Agendamento de Salas...")
-    print("Certifique-se de que o servidor backend está rodando em http://127.0.0.1:5000")
+    print("Certifique-se de que o servidor backend está rodando em http://127.0.0.1:8001")
     print("E que as credenciais de ADMIN e USER estão corretas neste script.")
 
     test_results = {}

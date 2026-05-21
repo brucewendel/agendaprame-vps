@@ -43,7 +43,7 @@ class Config:
     # CORS
     CORS_ORIGINS = _split_csv_env(
         os.environ.get('CORS_ORIGINS'),
-        'http://localhost:8002,http://127.0.0.1:8002',
+        'http://localhost:8001,http://127.0.0.1:8001',
     )
 
     # SMTP (must come from environment)

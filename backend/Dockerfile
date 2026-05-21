@@ -26,14 +26,17 @@ ENV PATH=$PATH:$ORACLE_HOME
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 # cx_Oracle build may fail in isolated build env without pkg_resources.
 RUN pip install --no-cache-dir "setuptools<81" wheel
 RUN pip install --no-cache-dir --no-build-isolation -r requirements.txt
 
-COPY . .
+COPY backend/ .
+COPY frontend/ /app/frontend/
 
-EXPOSE 8000
+ENV FRONTEND_DIR=/app/frontend
+
+EXPOSE 8001
 
 RUN pip install --no-cache-dir gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8001", "run:app"]

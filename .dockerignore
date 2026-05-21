@@ -1,0 +1,7 @@
+.git/
+backend/venv/
+backend/__pycache__/
+backend/**/*.pyc
+backend/.env
+backend/.env.*
+*.log
