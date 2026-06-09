@@ -1,9 +1,9 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, current_app, jsonify, request
 
-from utils.auth_decorators import jwt_required, admin_required
-from utils.login_rate_limiter import LoginRateLimiter
-from services.room_service import room_service
 from services import auth_service, booking_service
+from services.room_service import room_service
+from utils.auth_decorators import admin_required, jwt_required
+from utils.login_rate_limiter import LoginRateLimiter
 
 main = Blueprint('main', __name__)
 _login_rate_limiter = None
@@ -48,8 +48,13 @@ def login():
 
     auth_data, error = auth_service.authenticate_user(login_value, senha)
     if error:
-        rate_limiter.register_failure(rate_limit_key)
-        return jsonify({'message': 'Credenciais inválidas.'}), 401
+        if 'credenciais invalidas' in error.lower():
+            rate_limiter.register_failure(rate_limit_key)
+            return jsonify({'message': 'Credenciais invalidas.'}), 401
+        if 'banco de dados' in error.lower():
+            return jsonify({'message': 'Servico temporariamente indisponivel.'}), 503
+        current_app.logger.error('Unexpected login error for user=%s: %s', login_value, error)
+        return jsonify({'message': 'Erro interno de autenticacao.'}), 500
 
     rate_limiter.register_success(rate_limit_key)
     return jsonify({
@@ -91,7 +96,6 @@ def search_users_route():
     return jsonify(users), 200
 
 
-# --- Rotas de Salas (CRUD - Admin) ---
 @main.route('/rooms', methods=['POST'])
 @jwt_required
 @admin_required
@@ -163,7 +167,6 @@ def delete_room(room_id):
     return jsonify({'message': 'Sala excluida com sucesso.'}), 200
 
 
-# --- Rotas de Agendamentos (Funcionalidades Principais) ---
 @main.route('/agendamentos', methods=['POST'])
 @jwt_required
 def create_booking():

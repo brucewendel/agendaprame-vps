@@ -85,8 +85,15 @@ def authenticate_user(login, senha_fornecida):
     """Authenticate user supporting bcrypt hash and legacy fallback."""
     user_data, error = db_manager.get_user_data_from_db(login)
 
-    if error or not user_data:
+    if error:
+        if 'banco de dados' in error.lower():
+            logger.error('Authentication aborted due to database connectivity for login=%s', login)
+            return None, error
         logger.warning('Authentication lookup failed for login=%s', login)
+        return None, 'Credenciais invalidas.'
+
+    if not user_data:
+        logger.warning('Authentication lookup returned no data for login=%s', login)
         return None, 'Credenciais invalidas.'
 
     if (

@@ -31,7 +31,7 @@ class bancoOracle:
             if self.pool is not None:
                 return
 
-            dsn = cx_Oracle.makedsn(self.hostname, int(self.port), service_name=self.service_name)
+            dsn = self._build_dsn()
             min_pool = int(os.environ.get('DB_POOL_MIN', '2'))
             max_pool = int(os.environ.get('DB_POOL_MAX', '20'))
             increment_pool = int(os.environ.get('DB_POOL_INCREMENT', '2'))
@@ -47,10 +47,38 @@ class bancoOracle:
                 encoding='UTF-8',
             )
 
+    def _build_dsn(self) -> str:
+        connect_timeout = int(os.environ.get('DB_CONNECT_TIMEOUT', '10'))
+        transport_connect_timeout = int(os.environ.get('DB_TRANSPORT_CONNECT_TIMEOUT', '3'))
+        retry_count = int(os.environ.get('DB_RETRY_COUNT', '0'))
+        retry_delay = int(os.environ.get('DB_RETRY_DELAY', '1'))
+
+        return (
+            "(DESCRIPTION="
+            f"(TRANSPORT_CONNECT_TIMEOUT={transport_connect_timeout})"
+            f"(CONNECT_TIMEOUT={connect_timeout})"
+            f"(RETRY_COUNT={retry_count})"
+            f"(RETRY_DELAY={retry_delay})"
+            f"(ADDRESS=(PROTOCOL=TCP)(HOST={self.hostname})(PORT={int(self.port)}))"
+            f"(CONNECT_DATA=(SERVICE_NAME={self.service_name}))"
+            ")"
+        )
+
     def connect(self):
         try:
+            logger.info(
+                'Connecting to Oracle host=%s port=%s service=%s',
+                self.hostname,
+                self.port,
+                self.service_name,
+            )
             self._ensure_pool()
             self.connection = self.pool.acquire()
+            try:
+                call_timeout_ms = int(os.environ.get('DB_CALL_TIMEOUT_MS', '10000'))
+                self.connection.callTimeout = call_timeout_ms
+            except (AttributeError, TypeError, ValueError):
+                logger.debug('Oracle call timeout not applied for current client/driver.')
             return self.connection
         except cx_Oracle.DatabaseError:
             logger.exception('Erro ao conectar ao Oracle')
@@ -123,6 +151,7 @@ class bancoOracle:
             include_hash_column = self._password_hash_column_exists(conn)
             cursor = conn.cursor()
             sql_query = self._build_user_lookup_query(include_hash_column)
+            logger.info('Executing login lookup for user=%s', login)
             cursor.execute(sql_query, login=login)
             row = cursor.fetchone()
             cursor.close()
