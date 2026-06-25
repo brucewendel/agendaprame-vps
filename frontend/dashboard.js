@@ -382,9 +382,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Renderização ---
     function renderRoomTabs(rooms) {
         const activeRooms = rooms.filter(room => room.active);
-        roomList.innerHTML = activeRooms.map(room => 
+        roomList.innerHTML = activeRooms.map(room =>
             `<div class="room-tab ${room.id === currentRoomId ? 'active' : ''}" data-room-id="${room.id}">${room.name}</div>`
         ).join('');
+
+        const mobileSelect = document.getElementById('room-select-mobile');
+        if (mobileSelect) {
+            mobileSelect.innerHTML = activeRooms.map(room =>
+                `<option value="${room.id}" ${room.id === currentRoomId ? 'selected' : ''}>${room.name}</option>`
+            ).join('');
+        }
     }
 
     function renderHours() {
@@ -912,9 +919,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             const roomId = parseInt(e.target.dataset.roomId);
             if (roomId !== currentRoomId) {
                 currentRoomId = roomId;
-                renderRoomTabs(rooms); // Re-render to update active tab
+                renderRoomTabs(rooms);
                 await renderCalendar();
             }
+        }
+    });
+
+    document.getElementById('room-select-mobile')?.addEventListener('change', async (e) => {
+        const roomId = parseInt(e.target.value);
+        if (roomId !== currentRoomId) {
+            currentRoomId = roomId;
+            renderRoomTabs(rooms);
+            await renderCalendar();
         }
     });
 

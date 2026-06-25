@@ -4737,3 +4737,195 @@ body.light-mode .nav-glyph svg,
 body.light-mode .theme-icon svg {
     stroke: currentColor !important;
 }
+
+/* ===== SELECT MOBILE DE SALAS ===== */
+
+/* Desktop: oculto */
+.room-select-mobile {
+    display: none !important;
+}
+
+/* Mobile: substitui os chips de sala */
+@media (max-width: 768px) {
+    #room-list.room-tabs {
+        display: none !important;
+    }
+
+    .room-select-mobile {
+        display: block !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        background: rgba(255,255,255,0.07) !important;
+        border: 1px solid rgba(255,255,255,0.14) !important;
+        border-radius: 6px !important;
+        color: #e2e8f0 !important;
+        font-size: 0.82rem !important;
+        font-family: inherit !important;
+        padding: 0.38rem 0.5rem !important;
+        cursor: pointer !important;
+        outline: none !important;
+        height: 32px !important;
+        line-height: 1 !important;
+        transition: border-color 0.15s ease !important;
+    }
+
+    .room-select-mobile:focus {
+        border-color: #3b82f6 !important;
+        background: rgba(59,130,246,0.08) !important;
+    }
+
+    .room-select-mobile option {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+    }
+
+    body.light-mode .room-select-mobile {
+        background: rgba(0,0,0,0.05) !important;
+        border-color: rgba(0,0,0,0.18) !important;
+        color: #1e293b !important;
+    }
+
+    body.light-mode .room-select-mobile:focus {
+        border-color: #2563eb !important;
+        background: rgba(37,99,235,0.06) !important;
+    }
+
+    body.light-mode .room-select-mobile option {
+        background: #ffffff !important;
+        color: #1e293b !important;
+    }
+}
+
+/* ===== BOTÕES DE TODOS OS MODAIS ===== */
+
+/* Base unificada: todos os botões de ação nos modais */
+.modal-content .primary-button,
+.modal-content .secondary-button,
+.modal-content .danger-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.38rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.9rem !important;
+    border-radius: var(--btn-radius, 5px) !important;
+    cursor: pointer !important;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+}
+
+/* Primary: preenchido azul */
+.modal-content .primary-button {
+    background: #2563eb !important;
+    color: #fff !important;
+    border: 1px solid #2563eb !important;
+}
+.modal-content .primary-button:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* Secondary: ghost */
+.modal-content .secondary-button {
+    background: transparent !important;
+    color: var(--nx-text-soft, #94a3b8) !important;
+    border: 1px solid rgba(148,163,184,0.3) !important;
+}
+.modal-content .secondary-button:hover {
+    background: rgba(255,255,255,0.06) !important;
+    color: var(--nx-text, #e2e8f0) !important;
+    border-color: rgba(148,163,184,0.55) !important;
+}
+
+/* Danger: ghost vermelho */
+.modal-content .danger-button {
+    background: transparent !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(248,113,113,0.3) !important;
+}
+.modal-content .danger-button:hover {
+    background: rgba(248,113,113,0.08) !important;
+    border-color: rgba(248,113,113,0.6) !important;
+}
+
+/* Light mode */
+body.light-mode .modal-content .primary-button {
+    background: #2563eb !important;
+    color: #fff !important;
+    border-color: #2563eb !important;
+}
+body.light-mode .modal-content .secondary-button {
+    color: #64748b !important;
+    border-color: rgba(100,116,139,0.35) !important;
+}
+body.light-mode .modal-content .secondary-button:hover {
+    background: rgba(0,0,0,0.04) !important;
+    color: #1e293b !important;
+}
+body.light-mode .modal-content .danger-button {
+    color: #dc2626 !important;
+    border-color: rgba(220,38,38,0.3) !important;
+}
+body.light-mode .modal-content .danger-button:hover {
+    background: rgba(220,38,38,0.05) !important;
+}
+
+/* SVGs dos botões de modal */
+.modal-content button svg {
+    display: block !important;
+    width: 13px !important;
+    height: 13px !important;
+    flex-shrink: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Botões de filtro (Meus Agendamentos) */
+.room-filter-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 20px !important;
+    color: var(--nx-text-soft, #94a3b8) !important;
+    font-size: 0.75rem !important;
+    padding: 0.22rem 0.65rem !important;
+    cursor: pointer !important;
+    transition: all 0.12s ease !important;
+    white-space: nowrap !important;
+}
+.room-filter-btn:hover {
+    background: rgba(255,255,255,0.06) !important;
+    color: var(--nx-text, #e2e8f0) !important;
+    border-color: rgba(255,255,255,0.22) !important;
+}
+.room-filter-btn.active {
+    background: rgba(37,99,235,0.15) !important;
+    color: #93c5fd !important;
+    border-color: rgba(59,130,246,0.45) !important;
+    font-weight: 500 !important;
+}
+body.light-mode .room-filter-btn {
+    border-color: rgba(0,0,0,0.15) !important;
+    color: #64748b !important;
+}
+body.light-mode .room-filter-btn:hover {
+    background: rgba(0,0,0,0.04) !important;
+    color: #1e293b !important;
+}
+body.light-mode .room-filter-btn.active {
+    background: rgba(37,99,235,0.1) !important;
+    color: #2563eb !important;
+    border-color: rgba(37,99,235,0.4) !important;
+}
+
+/* Mobile: botões de modal full width */
+@media (max-width: 600px) {
+    .modal-actions .primary-button,
+    .modal-actions .secondary-button,
+    .modal-actions .danger-button {
+        flex: 1 !important;
+        justify-content: center !important;
+    }
+}
