@@ -5048,13 +5048,17 @@ body.light-mode #room-management-list .toggle-activate-btn:hover {
 }
 
 /* ===== CAMPOS INÍCIO/TÉRMINO SEMPRE EMPILHADOS ===== */
+#booking-modal .datetime-group,
 .datetime-group {
+    display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 0 !important;
 }
+#booking-modal .datetime-group .datetime-separator,
 .datetime-group .datetime-separator {
     display: none !important;
 }
+#booking-modal .datetime-group .input-group,
 .datetime-group .input-group {
     margin-bottom: 0.85rem !important;
 }
@@ -5062,28 +5066,65 @@ body.light-mode #room-management-list .toggle-activate-btn:hover {
 /* ===== TELA FIXA — SEM SCROLL HORIZONTAL (iOS/iPhone) ===== */
 html {
     overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
+    overscroll-behavior: none !important;
     max-width: 100vw !important;
 }
 body {
     overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
+    overscroll-behavior: none !important;
     max-width: 100vw !important;
     position: relative !important;
 }
-.dashboard-container,
-.main-content-area,
-.room-panel,
-.calendar-grid-wrapper,
-.calendar-controls {
+
+/* Esconde TODAS as scrollbars visivelmente (mantém funcionalidade) */
+* {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Modal: sem scroll horizontal, vertical suave e invisível */
+.modal {
+    overflow: hidden !important;
+    max-width: 100vw !important;
+}
+.modal-content {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: min(680px, calc(100vw - 1rem)) !important;
+    width: calc(100vw - 1rem) !important;
+    box-sizing: border-box !important;
+}
+
+/* Owner row: não deixar o botão "Alterar" sair da tela */
+.owner-row {
+    overflow: hidden !important;
+    flex-wrap: wrap !important;
+}
+.owner-display {
+    min-width: 0 !important;
+    flex: 1 1 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+#change-owner-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* Garante que nada dentro do modal ultrapasse a largura */
+.modal-content * {
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
-.modal {
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-}
-.modal-content {
-    max-width: min(680px, calc(100vw - 1rem)) !important;
-    box-sizing: border-box !important;
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+    width: 100% !important;
 }
