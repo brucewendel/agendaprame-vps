@@ -4945,3 +4945,104 @@ body.light-mode .room-filter-btn.active {
         justify-content: center !important;
     }
 }
+
+/* ===== BOTÕES GERENCIAR SALAS — ESTILO MINIMALISTA ===== */
+
+#room-management-list .edit-room-btn,
+#room-management-list .delete-room-btn,
+#room-management-list .toggle-room-status-btn,
+#room-management-list .toggle-deactivate-btn,
+#room-management-list .toggle-activate-btn {
+    background: transparent !important;
+    border-radius: 5px !important;
+    padding: 0.28rem 0.6rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background 0.12s ease, border-color 0.12s ease !important;
+    filter: none !important;
+    transform: none !important;
+    min-width: unset !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+}
+
+#room-management-list .edit-room-btn:hover,
+#room-management-list .delete-room-btn:hover,
+#room-management-list .toggle-room-status-btn:hover {
+    filter: none !important;
+    transform: none !important;
+}
+
+/* Editar: ghost azul */
+#room-management-list .edit-room-btn {
+    color: #60a5fa !important;
+    border: 1px solid rgba(96,165,250,0.3) !important;
+}
+#room-management-list .edit-room-btn:hover {
+    background: rgba(96,165,250,0.08) !important;
+    border-color: rgba(96,165,250,0.55) !important;
+}
+
+/* Excluir: ghost vermelho */
+#room-management-list .delete-room-btn {
+    color: #f87171 !important;
+    border: 1px solid rgba(248,113,113,0.3) !important;
+}
+#room-management-list .delete-room-btn:hover {
+    background: rgba(248,113,113,0.08) !important;
+    border-color: rgba(248,113,113,0.55) !important;
+}
+
+/* Desativar: ghost âmbar */
+#room-management-list .toggle-deactivate-btn {
+    color: #fbbf24 !important;
+    border: 1px solid rgba(251,191,36,0.3) !important;
+    background: transparent !important;
+}
+#room-management-list .toggle-deactivate-btn:hover {
+    background: rgba(251,191,36,0.08) !important;
+    border-color: rgba(251,191,36,0.55) !important;
+}
+
+/* Ativar: ghost verde */
+#room-management-list .toggle-activate-btn {
+    color: #4ade80 !important;
+    border: 1px solid rgba(74,222,128,0.3) !important;
+    background: transparent !important;
+}
+#room-management-list .toggle-activate-btn:hover {
+    background: rgba(74,222,128,0.08) !important;
+    border-color: rgba(74,222,128,0.55) !important;
+}
+
+/* Light mode */
+body.light-mode #room-management-list .edit-room-btn {
+    color: #2563eb !important;
+    border-color: rgba(37,99,235,0.3) !important;
+}
+body.light-mode #room-management-list .edit-room-btn:hover {
+    background: rgba(37,99,235,0.06) !important;
+}
+body.light-mode #room-management-list .delete-room-btn {
+    color: #dc2626 !important;
+    border-color: rgba(220,38,38,0.3) !important;
+}
+body.light-mode #room-management-list .delete-room-btn:hover {
+    background: rgba(220,38,38,0.06) !important;
+}
+body.light-mode #room-management-list .toggle-deactivate-btn {
+    color: #b45309 !important;
+    border-color: rgba(180,83,9,0.3) !important;
+}
+body.light-mode #room-management-list .toggle-deactivate-btn:hover {
+    background: rgba(180,83,9,0.06) !important;
+}
+body.light-mode #room-management-list .toggle-activate-btn {
+    color: #16a34a !important;
+    border-color: rgba(22,163,74,0.3) !important;
+}
+body.light-mode #room-management-list .toggle-activate-btn:hover {
+    background: rgba(22,163,74,0.06) !important;
+}

@@ -382,15 +382,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- Renderização ---
     function renderRoomTabs(rooms) {
         const activeRooms = rooms.filter(room => room.active);
+        const mobileSelect = document.getElementById('room-select-mobile');
+
         roomList.innerHTML = activeRooms.map(room =>
             `<div class="room-tab ${room.id === currentRoomId ? 'active' : ''}" data-room-id="${room.id}">${room.name}</div>`
         ).join('');
 
-        const mobileSelect = document.getElementById('room-select-mobile');
         if (mobileSelect) {
             mobileSelect.innerHTML = activeRooms.map(room =>
                 `<option value="${room.id}" ${room.id === currentRoomId ? 'selected' : ''}>${room.name}</option>`
             ).join('');
+        }
+
+        if (isMobile()) {
+            roomList.style.cssText = 'display:none!important';
+            if (mobileSelect) mobileSelect.style.cssText = 'display:flex!important';
+        } else {
+            roomList.style.cssText = '';
+            if (mobileSelect) mobileSelect.style.cssText = 'display:none!important';
         }
     }
 
