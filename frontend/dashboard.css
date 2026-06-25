@@ -4745,33 +4745,49 @@ body.light-mode .theme-icon svg {
     display: none !important;
 }
 
-/* Mobile: substitui os chips de sala */
+/* Mobile: esconde chips de sala com máxima especificidade */
 @media (max-width: 768px) {
-    #room-list.room-tabs {
+    body .dashboard-container .room-panel #room-list,
+    body .dashboard-container .room-panel #room-list.room-tabs,
+    body .dashboard-container .room-panel .room-tabs {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        flex: 0 0 0 !important;
+    }
+
+    body .dashboard-container .room-panel .room-tab {
         display: none !important;
     }
 
     .room-select-mobile {
-        display: block !important;
+        display: flex !important;
+        align-items: center !important;
         flex: 1 1 auto !important;
         min-width: 0 !important;
+        max-width: 160px !important;
         background: rgba(255,255,255,0.07) !important;
-        border: 1px solid rgba(255,255,255,0.14) !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
         border-radius: 6px !important;
         color: #e2e8f0 !important;
         font-size: 0.82rem !important;
         font-family: inherit !important;
-        padding: 0.38rem 0.5rem !important;
+        padding: 0 0.5rem !important;
         cursor: pointer !important;
         outline: none !important;
         height: 32px !important;
-        line-height: 1 !important;
         transition: border-color 0.15s ease !important;
+        -webkit-appearance: auto !important;
+        appearance: auto !important;
     }
 
     .room-select-mobile:focus {
         border-color: #3b82f6 !important;
-        background: rgba(59,130,246,0.08) !important;
+        background: rgba(59,130,246,0.1) !important;
     }
 
     .room-select-mobile option {
@@ -4781,7 +4797,7 @@ body.light-mode .theme-icon svg {
 
     body.light-mode .room-select-mobile {
         background: rgba(0,0,0,0.05) !important;
-        border-color: rgba(0,0,0,0.18) !important;
+        border-color: rgba(0,0,0,0.2) !important;
         color: #1e293b !important;
     }
 
