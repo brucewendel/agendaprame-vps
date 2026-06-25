@@ -5046,3 +5046,44 @@ body.light-mode #room-management-list .toggle-activate-btn {
 body.light-mode #room-management-list .toggle-activate-btn:hover {
     background: rgba(22,163,74,0.06) !important;
 }
+
+/* ===== CAMPOS INÍCIO/TÉRMINO SEMPRE EMPILHADOS ===== */
+.datetime-group {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+}
+.datetime-group .datetime-separator {
+    display: none !important;
+}
+.datetime-group .input-group {
+    margin-bottom: 0.85rem !important;
+}
+
+/* ===== TELA FIXA — SEM SCROLL HORIZONTAL (iOS/iPhone) ===== */
+html {
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none !important;
+    max-width: 100vw !important;
+}
+body {
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none !important;
+    max-width: 100vw !important;
+    position: relative !important;
+}
+.dashboard-container,
+.main-content-area,
+.room-panel,
+.calendar-grid-wrapper,
+.calendar-controls {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+.modal {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
+.modal-content {
+    max-width: min(680px, calc(100vw - 1rem)) !important;
+    box-sizing: border-box !important;
+}
