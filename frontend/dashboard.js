@@ -28,7 +28,42 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     let currentWeekStart = getStartOfWeek(new Date());
+    let currentMobileDate = new Date();
+    currentMobileDate.setHours(0, 0, 0, 0);
     let selectedBookingId = null;
+
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    // --- Ícones SVG (Lucide-style) ---
+    const ICONS = {
+        moon:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+        sun:          `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
+        chevronLeft:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`,
+        chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`,
+        logOut:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+        settings:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+        calendarDays: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>`,
+        calendarPlus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="19" y1="16" x2="19" y2="22"/><line x1="22" y1="19" x2="16" y2="19"/></svg>`,
+        trash:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+        pencil:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`,
+        power:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>`,
+        search:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+        userCheck:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>`,
+        users:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        plus:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
+        check:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`,
+        save:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+        x:            `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
+    };
+
+    function injectIcons(root = document) {
+        root.querySelectorAll('[data-icon]').forEach(el => {
+            const name = el.dataset.icon;
+            if (ICONS[name]) el.innerHTML = ICONS[name];
+        });
+    }
 
     // --- Elementos do DOM ---
     const roomList = document.getElementById('room-list');
@@ -81,9 +116,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const prevNavGlyph = document.querySelector('#prev-week-btn .nav-glyph');
     const nextNavGlyph = document.querySelector('#next-week-btn .nav-glyph');
 
-    if (logoutIcon) logoutIcon.textContent = '\u27B2';
-    if (prevNavGlyph) prevNavGlyph.textContent = '\u276E';
-    if (nextNavGlyph) nextNavGlyph.textContent = '\u276F';
+    if (logoutIcon) logoutIcon.innerHTML = ICONS.logOut;
+    if (prevNavGlyph) prevNavGlyph.innerHTML = ICONS.chevronLeft;
+    if (nextNavGlyph) nextNavGlyph.innerHTML = ICONS.chevronRight;
 
     function applyTheme(themeClass) {
         document.body.classList.remove('dark-mode', 'light-mode');
@@ -91,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         localStorage.setItem('themeMode', themeClass);
 
         if (themeToggleIcon) {
-            themeToggleIcon.textContent = themeClass === 'dark-mode' ? '\u{1F319}' : '\u2600\uFE0F';
+            themeToggleIcon.innerHTML = themeClass === 'dark-mode' ? ICONS.moon : ICONS.sun;
         }
     }
 
@@ -357,7 +392,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function renderCalendar() {
-        renderHours(); // Garante que as horas sejam renderizadas
+        renderHours();
         if (currentRoomId === null) {
             calendarGridBody.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Nenhuma sala ativa encontrada.</div>';
             calendarGridHeaders.innerHTML = '';
@@ -365,20 +400,36 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        spinnerOverlay.style.display = 'flex'; // Mostra o spinner overlay
-        const weekDates = Array.from({length: 6}, (_, i) => {
-            const date = new Date(currentWeekStart);
-            date.setDate(currentWeekStart.getDate() + i);
-            return date;
-        });
+        spinnerOverlay.style.display = 'flex';
 
-        calendarTitle.textContent = `${weekDates[0].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})} - ${weekDates[5].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})}`;
-        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">Horários</div>' + weekDates.map(date => 
+        const mobile = isMobile();
+        document.body.classList.toggle('mobile-day-view', mobile);
+
+        let weekDates;
+        let fetchStart;
+
+        if (mobile) {
+            const d = new Date(currentMobileDate);
+            d.setHours(0, 0, 0, 0);
+            weekDates = [d];
+            fetchStart = getStartOfWeek(d);
+            calendarTitle.textContent = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+        } else {
+            weekDates = Array.from({length: 6}, (_, i) => {
+                const date = new Date(currentWeekStart);
+                date.setDate(currentWeekStart.getDate() + i);
+                return date;
+            });
+            fetchStart = currentWeekStart;
+            calendarTitle.textContent = `${weekDates[0].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})} - ${weekDates[5].toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'})}`;
+        }
+
+        calendarGridHeaders.innerHTML = '<div class="calendar-hours-header">Horários</div>' + weekDates.map(date =>
             `<div class="calendar-day-header">${date.toLocaleDateString('pt-BR', {weekday: 'short'})}<br>${date.toLocaleDateString('pt-BR', {day: '2-digit'})}</div>`
         ).join('');
 
-        const bookings = await fetchBookings(currentWeekStart);
-        spinnerOverlay.style.display = 'none'; // Esconde o spinner overlay
+        const bookings = await fetchBookings(fetchStart);
+        spinnerOverlay.style.display = 'none';
 
         calendarGridBody.innerHTML = weekDates.map(date => `
             <div class="calendar-day-cell">
@@ -483,8 +534,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('modal-inicio').value = `${date}T${hour.padStart(2, '0')}:00`;
         document.getElementById('modal-fim').value = `${date}T${(parseInt(hour) + 1).toString().padStart(2, '0')}:00`;
         deleteBookingBtn.style.display = 'none';
-        bookingForm.querySelector('button[type="submit"]').textContent = 'Agendar';
-        bookingForm.querySelector('button[type="submit"]').style.display = 'inline-block';
+        const submitBtn = bookingForm.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = `<span class="btn-icon">${ICONS.calendarPlus}</span><span>Agendar</span>`;
+        submitBtn.style.display = 'inline-flex';
         bookingModal.style.display = 'flex';
     }
 
@@ -520,7 +572,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             // Show "Change Owner" button only for Admins on non-expired bookings
             if (isAdmin && !isPastBooking) {
-                changeOwnerBtn.style.display = 'inline-block';
+                changeOwnerBtn.style.display = 'inline-flex';
             } else {
                 changeOwnerBtn.style.display = 'none';
             }
@@ -536,8 +588,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('modal-regua-energia').checked = equipmentMatch ? equipmentMatch[0].includes('Régua de Energia') : false;
             document.getElementById('modal-suporte-ti').checked = equipmentMatch ? equipmentMatch[0].includes('Suporte de TI') : false;
 
-            deleteBookingBtn.style.display = canEdit ? 'inline-block' : 'none';
-            bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-block' : 'none';
+            deleteBookingBtn.style.display = canEdit ? 'inline-flex' : 'none';
+            bookingForm.querySelector('button[type="submit"]').style.display = canEdit ? 'inline-flex' : 'none';
             Array.from(bookingForm.elements).forEach(el => el.disabled = !canEdit);
             document.getElementById('modal-sala').disabled = true; // Sala não pode ser alterada
 
@@ -666,9 +718,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             <div class="room-management-item">
                 <span>${room.name}</span>
                 <div>
-                    <button class="edit-room-btn" data-room-id="${room.id}">Editar</button>
-                    <button class="delete-room-btn" data-room-id="${room.id}">Excluir</button>
-                    <button class="toggle-room-status-btn ${room.active ? 'toggle-deactivate-btn' : 'toggle-activate-btn'}" data-room-id="${room.id}">${room.active ? 'Desativar' : 'Ativar'}</button>
+                    <button class="edit-room-btn" data-room-id="${room.id}">${ICONS.pencil}<span>Editar</span></button>
+                    <button class="delete-room-btn" data-room-id="${room.id}">${ICONS.trash}<span>Excluir</span></button>
+                    <button class="toggle-room-status-btn ${room.active ? 'toggle-deactivate-btn' : 'toggle-activate-btn'}" data-room-id="${room.id}">${ICONS.power}<span>${room.active ? 'Desativar' : 'Ativar'}</span></button>
                 </div>
             </div>`).join('');
         roomManagementModal.style.display = 'flex';
@@ -703,7 +755,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <span class="user-search-result-name">${user.name}</span>
                     <span class="user-search-result-id">Matrícula ${user.id}</span>
                 </div>
-                <button type="button" class="primary-button select-user-btn" data-user-id="${user.id}" data-user-name="${user.name}">Selecionar</button>
+                <button type="button" class="primary-button select-user-btn" data-user-id="${user.id}" data-user-name="${user.name}">${ICONS.userCheck}<span>Selecionar</span></button>
             </div>
         `).join('');
     }
@@ -755,8 +807,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     logoutBtn.addEventListener('click', logout);
-    prevWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() - 7); await renderCalendar(); });
-    nextWeekBtn.addEventListener('click', async () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); await renderCalendar(); });
+    prevWeekBtn.addEventListener('click', async () => {
+        if (isMobile()) {
+            currentMobileDate.setDate(currentMobileDate.getDate() - 1);
+        } else {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+        }
+        await renderCalendar();
+    });
+    nextWeekBtn.addEventListener('click', async () => {
+        if (isMobile()) {
+            currentMobileDate.setDate(currentMobileDate.getDate() + 1);
+        } else {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+        }
+        await renderCalendar();
+    });
     closeModalBtn.addEventListener('click', () => bookingModal.style.display = 'none');
     window.addEventListener('click', (event) => { if (event.target == bookingModal) bookingModal.style.display = 'none'; });
     bookingForm.addEventListener('submit', async (e) => {
@@ -852,7 +918,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
+    // Re-renderiza ao mudar entre mobile e desktop
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => renderCalendar(), 300);
+    });
+
     // --- Carga Inicial ---
+    injectIcons();
     await fetchRooms();
     await renderCalendar();
 });

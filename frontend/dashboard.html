@@ -17,10 +17,10 @@
         <div class="header-right">
             <span id="user-name"></span>
             <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" aria-label="Alternar tema">
-                <span id="theme-icon" class="theme-icon" aria-hidden="true">&#127769;</span>
+                <span id="theme-icon" class="theme-icon" aria-hidden="true"></span>
             </button>
             <button id="logout-btn" class="logout-btn">
-                <span class="logout-icon" aria-hidden="true">&#10162;</span>
+                <span class="logout-icon" aria-hidden="true"></span>
                 <span>Sair</span>
             </button>
         </div>
@@ -32,15 +32,15 @@
             <div id="room-list" class="room-tabs">
                 <!-- As abas de sala e botões de adicionar/editar/excluir serão inseridos pelo JS -->
             </div>
-            <button id="manage-rooms-btn" class="primary-button">Gerenciar Salas</button>
-            <button id="my-bookings-btn" class="secondary-button">Meus Agendamentos</button>
+            <button id="manage-rooms-btn" class="primary-button"><span class="btn-icon" data-icon="settings"></span>Gerenciar Salas</button>
+            <button id="my-bookings-btn" class="secondary-button"><span class="btn-icon" data-icon="calendarDays"></span>Meus Agendamentos</button>
         </aside>
 
         <section class="main-content-area">
             <div class="calendar-controls card">
-                <button id="prev-week-btn" class="nav-button" aria-label="Semana anterior"><span class="nav-glyph" aria-hidden="true">&#10094;</span></button>
+                <button id="prev-week-btn" class="nav-button" aria-label="Semana anterior"><span class="nav-glyph" aria-hidden="true"></span></button>
                 <h2 id="calendar-title" class="calendar-title"></h2>
-                <button id="next-week-btn" class="nav-button" aria-label="Próxima semana"><span class="nav-glyph" aria-hidden="true">&#10095;</span></button>
+                <button id="next-week-btn" class="nav-button" aria-label="Próxima semana"><span class="nav-glyph" aria-hidden="true"></span></button>
             </div>
             <div class="calendar-grid-wrapper card">
                 <div id="calendar-grid-headers" class="calendar-grid-headers"></div>
@@ -54,7 +54,7 @@
 
     <div id="booking-modal" class="modal">
         <div class="modal-content card">
-            <span class="close-btn">&times;</span>
+            <button class="close-btn" type="button" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3>Detalhes do Agendamento</h3>
             <form id="booking-form">
                 <div class="form-columns-container">
@@ -65,9 +65,9 @@
                         </div>
                         <div class="input-group">
                             <label for="modal-owner-display">Agendado por</label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span id="modal-owner-display" class="form-control" style="flex-grow: 1; padding: 0.6rem; border-radius: 4px; border: 1px solid #2c3556; background: #22305a; color: #fff; font-size: 1rem;"></span>
-                                <button type="button" id="change-owner-btn" class="secondary-button" style="width: auto; margin-top: 0;">Alterar</button>
+                            <div class="owner-row">
+                                <span id="modal-owner-display" class="form-control owner-display"></span>
+                                <button type="button" id="change-owner-btn" class="secondary-button"><span class="btn-icon" data-icon="users"></span>Alterar</button>
                                 <input type="hidden" id="modal-owner-id">
                             </div>
                         </div>
@@ -110,8 +110,8 @@
                     </div>
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" class="primary-button">Agendar</button>
-                    <button type="button" id="delete-booking-btn" class="danger-button" style="display:none;">Excluir</button>
+                    <button type="submit" class="primary-button"><span class="btn-icon" data-icon="calendarPlus"></span><span>Agendar</span></button>
+                    <button type="button" id="delete-booking-btn" class="danger-button" style="display:none;"><span class="btn-icon" data-icon="trash"></span>Excluir</button>
                 </div>
             </form>
             <div id="modal-message-area" class="message-area"></div>
@@ -120,18 +120,18 @@
 
     <div id="room-management-modal" class="modal" style="display:none;">
         <div class="modal-content card">
-            <span class="close-btn" onclick="document.getElementById('room-management-modal').style.display='none'">&times;</span>
+            <button class="close-btn" type="button" aria-label="Fechar" onclick="document.getElementById('room-management-modal').style.display='none'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3>Gerenciar Salas</h3>
             <div id="room-management-list"></div>
             <div class="modal-actions">
-                <button id="add-new-room-btn" class="primary-button">Adicionar Nova Sala</button>
+                <button id="add-new-room-btn" class="primary-button"><span class="btn-icon" data-icon="plus"></span>Adicionar Nova Sala</button>
             </div>
         </div>
     </div>
 
     <div id="edit-room-modal" class="modal" style="display:none;">
         <div class="modal-content card">
-            <span class="close-btn" onclick="document.getElementById('edit-room-modal').style.display='none'">&times;</span>
+            <button class="close-btn" type="button" aria-label="Fechar" onclick="document.getElementById('edit-room-modal').style.display='none'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3>Editar Sala</h3>
             <form id="edit-room-form">
                 <input type="hidden" id="edit-room-id">
@@ -140,7 +140,7 @@
                     <input type="text" id="edit-room-name" required>
                 </div>
                 <div class="modal-actions">
-                    <button type="submit" class="primary-button">Salvar</button>
+                    <button type="submit" class="primary-button"><span class="btn-icon" data-icon="save"></span>Salvar</button>
                 </div>
             </form>
         </div>
@@ -149,7 +149,7 @@
     <!-- Modal Meus Agendamentos -->
     <div id="my-bookings-modal" class="modal" style="display:none;">
         <div class="modal-content card">
-            <span class="close-btn" onclick="document.getElementById('my-bookings-modal').style.display='none'">&times;</span>
+            <button class="close-btn" type="button" aria-label="Fechar" onclick="document.getElementById('my-bookings-modal').style.display='none'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3 id="my-bookings-title">Meus Agendamentos</h3>
             <div id="my-bookings-list"></div>
         </div>
@@ -158,7 +158,7 @@
     <!-- Modal de Busca de Usuários -->
     <div id="user-search-modal" class="modal" style="display:none;">
         <div class="modal-content card">
-            <span class="close-btn" onclick="document.getElementById('user-search-modal').style.display='none'">&times;</span>
+            <button class="close-btn" type="button" aria-label="Fechar" onclick="document.getElementById('user-search-modal').style.display='none'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3>Buscar Usuário</h3>
             <p class="user-search-subtitle">Defina o tipo de busca e selecione o usuário para o agendamento.</p>
             <div class="input-group search-query-group">
@@ -172,7 +172,7 @@
                 <input type="radio" id="search-by-name" name="search-type" value="name">
                 <label for="search-by-name">Nome</label>
             </div>
-            <button id="user-search-button" class="primary-button">Buscar</button>
+            <button id="user-search-button" class="primary-button"><span class="btn-icon" data-icon="search"></span>Buscar</button>
             <div id="user-search-results" class="user-search-results">
                 <p class="user-search-empty">Digite um termo para iniciar a busca.</p>
             </div>
@@ -182,7 +182,7 @@
     <!-- Modal de Alerta Genérico -->
     <div id="alert-modal" class="modal" style="display:none;">
         <div class="modal-content card">
-            <span class="close-btn" id="alert-modal-close-btn">&times;</span>
+            <button class="close-btn" type="button" id="alert-modal-close-btn" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             <h3 id="alert-modal-title">Aviso</h3>
             <p id="alert-modal-message"></p>
             <div class="modal-actions">
