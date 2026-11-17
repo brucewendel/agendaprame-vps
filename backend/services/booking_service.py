@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import cx_Oracle
 
-from services import discord_service, email_service, senderzap_service
+from services import discord_service, email_service, senderzap_service, whatsapp_service
 from utils.db_conection import db_manager
 
 logger = logging.getLogger(__name__)
@@ -136,6 +136,10 @@ def create_booking(data, user_id):
         try:
             creator = _get_user_contact(cursor, user_id)
             discord_service.notify_booking(
+                'create', sala_nome, titulo, inicio_dt, fim_dt,
+                user_name=creator[1] if creator else None, descricao=descricao,
+            )
+            whatsapp_service.notify_support(
                 'create', sala_nome, titulo, inicio_dt, fim_dt,
                 user_name=creator[1] if creator else None, descricao=descricao,
             )
@@ -298,8 +302,13 @@ def update_booking(booking_id, data, user_id, user_profile):
 
         try:
             owner = _get_user_contact(cursor, params.get('id_usuario', booking_owner[0]))
+            sala_nome_upd = _get_room_name(cursor, sala_id)
             discord_service.notify_booking(
-                'update', _get_room_name(cursor, sala_id), titulo, inicio_dt, fim_dt,
+                'update', sala_nome_upd, titulo, inicio_dt, fim_dt,
+                user_name=owner[1] if owner else None, descricao=descricao,
+            )
+            whatsapp_service.notify_support(
+                'update', sala_nome_upd, titulo, inicio_dt, fim_dt,
                 user_name=owner[1] if owner else None, descricao=descricao,
             )
         except Exception:
@@ -379,11 +388,18 @@ def delete_booking(booking_id, user_id, user_profile):
 
         try:
             if notification_details:
+                del_desc = notification_details[6].read() if hasattr(notification_details[6], 'read') else notification_details[6]
                 discord_service.notify_booking(
                     'delete', notification_details[3], notification_details[0],
                     notification_details[1], notification_details[2],
                     user_name=notification_details[5],
-                    descricao=notification_details[6].read() if hasattr(notification_details[6], 'read') else notification_details[6],
+                    descricao=del_desc,
+                )
+                whatsapp_service.notify_support(
+                    'delete', notification_details[3], notification_details[0],
+                    notification_details[1], notification_details[2],
+                    user_name=notification_details[5],
+                    descricao=del_desc,
                 )
         except Exception:
             logger.warning('Falha na notificacao Discord apos cancelar agendamento.', exc_info=True)
