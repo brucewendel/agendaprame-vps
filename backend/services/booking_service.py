@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import cx_Oracle
 
-from services import email_service, senderzap_service
+from services import discord_service, email_service, senderzap_service
 from utils.db_conection import db_manager
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,15 @@ def create_booking(data, user_id):
                 senderzap_service.send_whatsapp_message(senderzap_service.IT_PHONE, mensagem)
         except Exception:
             logger.warning('Falha no envio de notificacao WhatsApp apos criar agendamento.', exc_info=True)
+
+        try:
+            creator = _get_user_contact(cursor, user_id)
+            discord_service.notify_booking(
+                'create', sala_nome, titulo, inicio_dt, fim_dt,
+                user_name=creator[1] if creator else None, descricao=descricao,
+            )
+        except Exception:
+            logger.warning('Falha na notificacao Discord apos criar agendamento.', exc_info=True)
 
         try:
             user_data = _get_user_contact(cursor, user_id)
@@ -288,6 +297,15 @@ def update_booking(booking_id, data, user_id, user_profile):
         conn.commit()
 
         try:
+            owner = _get_user_contact(cursor, params.get('id_usuario', booking_owner[0]))
+            discord_service.notify_booking(
+                'update', _get_room_name(cursor, sala_id), titulo, inicio_dt, fim_dt,
+                user_name=owner[1] if owner else None, descricao=descricao,
+            )
+        except Exception:
+            logger.warning('Falha na notificacao Discord apos atualizar agendamento.', exc_info=True)
+
+        try:
             final_owner_id = params.get('id_usuario', booking_owner[0])
             user_data = _get_user_contact(cursor, final_owner_id)
             if user_data and user_data[0]:
@@ -335,7 +353,7 @@ def delete_booking(booking_id, user_id, user_profile):
         cursor = conn.cursor()
 
         sql_get_details = """
-            SELECT a.TITULO, a.DATA_INICIO, a.DATA_FIM, s.NOME_SALA AS NOME_SALA, u.email, u.nome
+            SELECT a.TITULO, a.DATA_INICIO, a.DATA_FIM, s.NOME_SALA AS NOME_SALA, u.email, u.nome, a.DESCRICAO
             FROM MX2_AGENDAMENTOS_SALA a
             LEFT JOIN pcempr u ON a.ID_USUARIO = u.matricula
             LEFT JOIN mx2_salas s ON a.ID_SALA = s.id_sala
@@ -361,7 +379,18 @@ def delete_booking(booking_id, user_id, user_profile):
 
         try:
             if notification_details:
-                summary, dtstart, dtend, location, recipient_email, user_name = notification_details
+                discord_service.notify_booking(
+                    'delete', notification_details[3], notification_details[0],
+                    notification_details[1], notification_details[2],
+                    user_name=notification_details[5],
+                    descricao=notification_details[6].read() if hasattr(notification_details[6], 'read') else notification_details[6],
+                )
+        except Exception:
+            logger.warning('Falha na notificacao Discord apos cancelar agendamento.', exc_info=True)
+
+        try:
+            if notification_details:
+                summary, dtstart, dtend, location, recipient_email, user_name = notification_details[:6]
                 booking_details = {
                     'summary': summary,
                     'dtstart': dtstart,
